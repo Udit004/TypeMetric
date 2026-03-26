@@ -12,6 +12,7 @@ import { calculateAccuracy, calculateWPM } from "../lib/metrics";
 import { parseTextToCharacters } from "../lib/textParser";
 import { isCharacterCorrect } from "../lib/validation";
 import { saveTypingSessionApi } from "../services/typingSessionService";
+import type { CompletionReason, SaveTypingSessionPayload } from "../types/typingSession";
 import { TextRenderer } from "./TextRenderer";
 import { TypingStats } from "./TypingStats";
 import { useAuth } from "@/share/hooks/useAuth";
@@ -100,7 +101,11 @@ export function TypingInput({
     }
 
     const saveSession = async () => {
-      const payload = {
+      const completionReason: CompletionReason = isFinished
+        ? "time_up"
+        : "text_completed";
+
+      const payload: SaveTypingSessionPayload = {
         promptText: resolvedText,
         typedText: typedCharacters.join(""),
         totalCharacters: parsedText.length,
@@ -111,7 +116,7 @@ export function TypingInput({
         wpm: calculateWPM(typedCharacters.length, elapsedMs),
         elapsedMs,
         durationSeconds,
-        completionReason: isFinished ? "time_up" : "text_completed" as const,
+        completionReason,
       };
 
       try {
