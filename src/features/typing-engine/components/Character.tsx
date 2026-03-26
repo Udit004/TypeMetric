@@ -8,7 +8,7 @@ interface CharacterProps {
 
 const statusClasses: Record<CharacterStatus, string> = {
   idle: "text-slate-500",
-  active: "text-cyan-200",
+  active: "text-slate-500",
   correct: "text-emerald-200",
   incorrect: "rounded-sm bg-rose-400/25 text-rose-100",
 };
