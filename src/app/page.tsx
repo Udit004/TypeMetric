@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { TypingInput } from "@/features/typing-engine/components/TypingInput";
 
 export default function Home() {
@@ -14,9 +15,19 @@ export default function Home() {
           </span>
 
           <div className="space-y-3">
-            <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-              TypeMetric
-            </h1>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Image
+                  src="/assests/images/logo.png"
+                  alt="TypeMetric logo"
+                  width={64}
+                  height={64}
+                  className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14"
+                  priority
+                />
+                <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                  TypeMetric
+                </h1>
+              </div>
             <p className="max-w-3xl text-sm leading-relaxed text-slate-200 sm:text-base lg:text-lg">
               Build elite typing speed with a distraction-free engine, precise WPM tracking,
               and instant accuracy insights designed for serious performance training.

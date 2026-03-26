@@ -7,12 +7,17 @@ interface UseTypingEngineOptions {
   onFirstInput?: () => void;
 }
 
+type KeyEventLike = Pick<
+  KeyboardEvent,
+  "key" | "ctrlKey" | "metaKey" | "altKey" | "preventDefault"
+>;
+
 interface UseTypingEngineReturn extends TypingState {
-  handleKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  handleKeyDown: (event: KeyEventLike) => void;
   resetTyping: () => void;
 }
 
-function isPrintableKey(event: React.KeyboardEvent<HTMLInputElement>): boolean {
+function isPrintableKey(event: KeyEventLike): boolean {
   return event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
 }
 
@@ -78,7 +83,7 @@ export function useTypingEngine(
   );
 
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
+    (event: KeyEventLike) => {
       if (event.key === "Backspace") {
         event.preventDefault();
         handleBackspace();
