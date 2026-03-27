@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { useAuth } from "@/share/hooks/useAuth";
 import { AuthPanel } from "@/share/components/auth-panel";
@@ -42,6 +43,12 @@ export function Navbar() {
 						</span>
 					) : isAuthenticated && user ? (
 						<>
+							<Link
+								href="/multiplayer"
+								className="rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
+							>
+								Multiplayer
+							</Link>
 							<span className="rounded-lg border border-emerald-200/30 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-100">
 								{user.name}
 							</span>
