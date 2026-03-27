@@ -26,6 +26,13 @@ interface PodiumSlot {
   glowClass: string;
 }
 
+interface CelebrationParticle {
+  positionClass: string;
+  toneClass: string;
+  motionClass: string;
+  shapeClass: string;
+}
+
 const SCORE_WEIGHTS = {
   wpm: 0.6,
   accuracy: 0.3,
@@ -33,6 +40,69 @@ const SCORE_WEIGHTS = {
   mistakePenalty: 0.35,
   finishBonus: 2,
 };
+
+const CELEBRATION_PARTICLES: CelebrationParticle[] = [
+  {
+    positionClass: "left-[6%] top-[10%]",
+    toneClass: "bg-cyan-300/80",
+    motionClass: "animate-bounce",
+    shapeClass: "h-2 w-2 rounded-full",
+  },
+  {
+    positionClass: "left-[14%] top-[24%]",
+    toneClass: "bg-emerald-300/80",
+    motionClass: "animate-pulse",
+    shapeClass: "h-3 w-1.5 rounded-sm rotate-12",
+  },
+  {
+    positionClass: "left-[22%] top-[8%]",
+    toneClass: "bg-amber-300/80",
+    motionClass: "animate-ping",
+    shapeClass: "h-2 w-2 rounded-full",
+  },
+  {
+    positionClass: "left-[30%] top-[18%]",
+    toneClass: "bg-fuchsia-300/80",
+    motionClass: "animate-bounce",
+    shapeClass: "h-3 w-1.5 rounded-sm -rotate-12",
+  },
+  {
+    positionClass: "left-[40%] top-[6%]",
+    toneClass: "bg-sky-300/80",
+    motionClass: "animate-pulse",
+    shapeClass: "h-2 w-2 rounded-full",
+  },
+  {
+    positionClass: "left-[52%] top-[22%]",
+    toneClass: "bg-lime-300/80",
+    motionClass: "animate-bounce",
+    shapeClass: "h-3 w-1.5 rounded-sm rotate-6",
+  },
+  {
+    positionClass: "left-[62%] top-[9%]",
+    toneClass: "bg-rose-300/80",
+    motionClass: "animate-ping",
+    shapeClass: "h-2 w-2 rounded-full",
+  },
+  {
+    positionClass: "left-[72%] top-[20%]",
+    toneClass: "bg-indigo-300/80",
+    motionClass: "animate-pulse",
+    shapeClass: "h-3 w-1.5 rounded-sm -rotate-6",
+  },
+  {
+    positionClass: "left-[82%] top-[8%]",
+    toneClass: "bg-cyan-300/80",
+    motionClass: "animate-bounce",
+    shapeClass: "h-2 w-2 rounded-full",
+  },
+  {
+    positionClass: "left-[90%] top-[24%]",
+    toneClass: "bg-amber-300/80",
+    motionClass: "animate-pulse",
+    shapeClass: "h-3 w-1.5 rounded-sm rotate-12",
+  },
+];
 
 function roundToTwo(value: number): number {
   return Math.round(value * 100) / 100;
@@ -228,6 +298,15 @@ export function RaceCompletionPanel({
       <div className="relative overflow-hidden rounded-xl border border-cyan-200/25 bg-linear-to-r from-emerald-400/10 via-cyan-400/10 to-sky-400/10 p-4 sm:p-5">
         <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-300/20 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-300/20 blur-2xl" />
+        <div className="pointer-events-none absolute inset-0">
+          {CELEBRATION_PARTICLES.map((particle, index) => (
+            <span
+              key={`celebration-${index}`}
+              className={`absolute ${particle.positionClass} ${particle.toneClass} ${particle.motionClass} ${particle.shapeClass}`}
+            />
+          ))}
+        </div>
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/30 animate-ping" />
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">
           Race Complete
         </p>
@@ -250,10 +329,18 @@ export function RaceCompletionPanel({
         <div className={`grid items-end gap-3 ${podiumGridClass}`}>
           {podiumOrder.map((slot) => (
             <div key={`podium-${slot.row.userId}`} className="flex flex-col items-center gap-2">
-              <div
-                className={`grid h-14 w-14 place-items-center rounded-full border border-white/30 text-sm font-black text-slate-950 ${getAvatarToneClass(slot.row.userId)} ${slot.row.rank === 1 ? "animate-pulse" : ""}`}
-              >
-                {getInitials(slot.row.name)}
+              <div className="relative">
+                {slot.row.rank === 1 ? (
+                  <>
+                    <span className="pointer-events-none absolute -inset-2 rounded-full border border-yellow-200/40 animate-ping" />
+                    <span className="pointer-events-none absolute -inset-1 rounded-full border border-cyan-200/35 animate-pulse" />
+                  </>
+                ) : null}
+                <div
+                  className={`relative grid h-14 w-14 place-items-center rounded-full border border-white/30 text-sm font-black text-slate-950 ${getAvatarToneClass(slot.row.userId)} ${slot.row.rank === 1 ? "animate-pulse" : ""}`}
+                >
+                  {getInitials(slot.row.name)}
+                </div>
               </div>
               <p className="text-center text-xs font-semibold text-slate-100">{slot.row.name}</p>
               <p className="text-[11px] text-cyan-100">{slot.row.score.toFixed(2)}</p>
