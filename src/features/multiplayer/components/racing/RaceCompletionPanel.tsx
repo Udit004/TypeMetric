@@ -12,18 +12,58 @@ interface CompletionRow {
   userId: string;
   name: string;
   rank: number;
+  score: number;
   wpm: number;
   accuracy: number;
   typedCharacters: number;
   mistakes: number;
 }
 
+const SCORE_WEIGHTS = {
+  wpm: 0.6,
+  accuracy: 0.3,
+  completion: 0.1,
+  mistakePenalty: 0.35,
+  finishBonus: 2,
+};
+
+function roundToTwo(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function computeScore(
+  typedCharacters: number,
+  wpm: number,
+  accuracy: number,
+  mistakes: number,
+  didFinish: boolean,
+  maxTypedCharacters: number
+): number {
+  const promptLength = Math.max(1, maxTypedCharacters);
+  const completionRatio = Math.min(1, typedCharacters / promptLength);
+  const completionScore = completionRatio * 100;
+
+  const rawScore =
+    wpm * SCORE_WEIGHTS.wpm +
+    accuracy * SCORE_WEIGHTS.accuracy +
+    completionScore * SCORE_WEIGHTS.completion -
+    mistakes * SCORE_WEIGHTS.mistakePenalty +
+    (didFinish ? SCORE_WEIGHTS.finishBonus : 0);
+
+  return roundToTwo(Math.max(0, rawScore));
+}
+
 function toCompletionRows(participants: MultiplayerPlayer[], results: RaceResult[]): CompletionRow[] {
+  const maxTypedCharacters = participants.reduce((maxValue, participant) => {
+    return Math.max(maxValue, participant.progress.typedCharacters);
+  }, 0);
+
   if (results.length > 0) {
     return results.map((result) => ({
       userId: result.userId,
       name: result.name,
       rank: result.rank,
+      score: result.score,
       wpm: result.wpm,
       accuracy: result.accuracy,
       typedCharacters: result.typedCharacters,
@@ -32,15 +72,27 @@ function toCompletionRows(participants: MultiplayerPlayer[], results: RaceResult
   }
 
   return [...participants]
-    .sort((a, b) => b.progress.wpm - a.progress.wpm)
-    .map((participant, index) => ({
-      userId: participant.userId,
-      name: participant.name,
+    .map((participant) => ({
+      participant,
+      score: computeScore(
+        participant.progress.typedCharacters,
+        participant.progress.wpm,
+        participant.progress.accuracy,
+        participant.progress.mistakes,
+        participant.progress.finishedAt !== null,
+        maxTypedCharacters
+      ),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map((item, index) => ({
+      userId: item.participant.userId,
+      name: item.participant.name,
       rank: index + 1,
-      wpm: participant.progress.wpm,
-      accuracy: participant.progress.accuracy,
-      typedCharacters: participant.progress.typedCharacters,
-      mistakes: participant.progress.mistakes,
+      score: item.score,
+      wpm: item.participant.progress.wpm,
+      accuracy: item.participant.progress.accuracy,
+      typedCharacters: item.participant.progress.typedCharacters,
+      mistakes: item.participant.progress.mistakes,
     }));
 }
 
@@ -66,7 +118,8 @@ export function RaceCompletionPanel({
         </h3>
         {winner ? (
           <p className="mt-1 text-sm text-emerald-100/90">
-            {winner.wpm.toFixed(1)} WPM | {winner.accuracy.toFixed(1)}% accuracy
+            Score {winner.score.toFixed(2)} | {winner.wpm.toFixed(1)} WPM | {winner.accuracy.toFixed(1)}%
+            accuracy
           </p>
         ) : null}
       </div>
@@ -77,7 +130,8 @@ export function RaceCompletionPanel({
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Rank #{row.rank}</p>
             <p className="mt-1 text-base font-bold text-white">{row.name}</p>
             <p className="mt-1 text-xs text-slate-300">
-              {row.wpm.toFixed(1)} WPM | {row.accuracy.toFixed(1)}% accuracy
+              Score {row.score.toFixed(2)} | {row.wpm.toFixed(1)} WPM | {row.accuracy.toFixed(1)}%
+              accuracy
             </p>
             <p className="text-xs text-slate-400">
               {row.typedCharacters} chars | {row.mistakes} mistakes
