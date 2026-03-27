@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RaceCompletionPanel } from "./RaceCompletionPanel";
+import { RaceLeaderboard } from "./RaceLeaderboard";
+import { RaceRoomHeader } from "./RaceRoomHeader";
+import { RaceTrackView } from "./RaceTrackView";
+import { RaceTypingPanel } from "./RaceTypingPanel";
 
 import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
 import { getRoomApi, joinRoomApi } from "../../services/multiplayerRoomService";
-import { TextRenderer } from "@/features/typing-engine/components/TextRenderer";
 import { useTypingEngine } from "@/features/typing-engine/hooks/useTypingEngine";
 import { calculateAccuracy, calculateWPM } from "@/features/typing-engine/lib/metrics";
 import { parseTextToCharacters } from "@/features/typing-engine/lib/textParser";
@@ -39,6 +43,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   const [loadingMessage, setLoadingMessage] = useState("Joining room...");
   const [didCopyLink, setDidCopyLink] = useState(false);
+  const participants = useMemo(() => room?.participants ?? [], [room?.participants]);
 
   const activeText = room?.promptText || "";
   const parsedText = useMemo(() => parseTextToCharacters(activeText), [activeText]);
@@ -168,6 +173,10 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     router.push("/multiplayer");
   };
 
+  const me = participants.find((participant) => participant.userId === user?.id);
+  const isHost = Boolean(me?.isHost);
+  const isRaceFinished = room?.status === "finished";
+
   if (!isAuthenticated) {
     return (
       <section className="rounded-3xl border border-rose-200/20 bg-rose-500/10 p-6 text-rose-100">
@@ -183,119 +192,48 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     );
   }
 
-  const me = room?.participants.find((participant) => participant.userId === user?.id);
-  const isHost = Boolean(me?.isHost);
-
   return (
     <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-200/20 bg-slate-900/50 px-4 py-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Room</p>
-          <p className="text-lg font-black text-white">#{roomId}</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleCopyInviteLink}
-            className="rounded-lg border border-white/15 bg-slate-900/50 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
-          >
-            {didCopyLink ? "Copied" : "Copy Invite Link"}
-          </button>
-          {isHost && (room?.status === "waiting" || room?.status === "finished") ? (
-            <button
-              type="button"
-              onClick={startRace}
-              className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              {room?.status === "finished" ? "Start Next Race" : "Start Race"}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={handleLeaveRoom}
-            className="rounded-lg border border-rose-200/20 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20"
-          >
-            Leave
-          </button>
-        </div>
-      </div>
+      <RaceRoomHeader
+        roomId={roomId}
+        didCopyLink={didCopyLink}
+        isHost={isHost}
+        roomStatus={room?.status}
+        onCopyInviteLink={handleCopyInviteLink}
+        onStartRace={startRace}
+        onLeaveRoom={handleLeaveRoom}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-        <div className="space-y-3 rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4">
-          {loadingMessage ? (
-            <p className="rounded-lg border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-slate-200">
-              {loadingMessage}
-            </p>
-          ) : null}
-
-          {countdownSeconds !== null ? (
-            <p className="rounded-lg border border-cyan-200/25 bg-cyan-400/10 px-3 py-2 text-sm font-semibold text-cyan-100">
-              Race starts in {countdownSeconds} second{countdownSeconds === 1 ? "" : "s"}
-            </p>
-          ) : null}
-
-          {remainingSeconds !== null && room?.status === "racing" ? (
-            <p className="rounded-lg border border-emerald-200/25 bg-emerald-400/10 px-3 py-2 text-sm font-semibold text-emerald-100">
-              Time left: {remainingSeconds}s
-            </p>
-          ) : null}
-
-          {activeText ? (
-            <TextRenderer
-              text={activeText}
-              typedCharacters={typedCharacters}
-              currentIndex={currentIndex}
-              isFinished={room?.status === "finished"}
-              onRestart={resetTyping}
-            />
-          ) : (
-            <p className="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">
-              Waiting for room state...
-            </p>
-          )}
-        </div>
+        {isRaceFinished ? (
+          <RaceCompletionPanel
+            participants={participants}
+            results={results}
+            winnerUserId={winnerUserId}
+            isHost={isHost}
+            onStartNextRace={startRace}
+          />
+        ) : (
+          <RaceTypingPanel
+            loadingMessage={loadingMessage}
+            countdownSeconds={countdownSeconds}
+            remainingSeconds={remainingSeconds}
+            roomStatus={room?.status}
+            activeText={activeText}
+            typedCharacters={typedCharacters}
+            currentIndex={currentIndex}
+            onRestart={resetTyping}
+          />
+        )}
 
         <div className="space-y-3 rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4">
-          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-200">
-            Live Leaderboard
-          </h3>
-
-          <div className="space-y-2">
-            {room?.participants.map((participant) => (
-              <div
-                key={participant.userId}
-                className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-white">
-                    {participant.name}
-                    {participant.isHost ? " (Host)" : ""}
-                    {!participant.isConnected ? " [Offline]" : ""}
-                  </p>
-                  <span className="text-xs text-slate-400">{participant.progress.wpm.toFixed(1)} WPM</span>
-                </div>
-                <p className="mt-1 text-xs text-slate-300">
-                  {participant.progress.typedCharacters} chars | {participant.progress.accuracy.toFixed(1)}%
-                  accuracy | {participant.progress.mistakes} mistakes
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {room?.status === "finished" && results.length > 0 ? (
-            <div className="mt-3 space-y-2 rounded-xl border border-emerald-200/25 bg-emerald-400/10 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-100">
-                Final Results
-              </p>
-              {results.map((result) => (
-                <p key={result.userId} className="text-sm text-emerald-50">
-                  #{result.rank} {result.name}
-                  {winnerUserId === result.userId ? " (Winner)" : ""} - {result.wpm.toFixed(1)} WPM
-                </p>
-              ))}
-            </div>
-          ) : null}
+          <RaceTrackView
+            participants={participants}
+            results={results}
+            winnerUserId={winnerUserId}
+            roomStatus={room?.status}
+          />
+          <RaceLeaderboard participants={participants} />
         </div>
       </div>
 
