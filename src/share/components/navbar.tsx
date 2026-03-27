@@ -20,9 +20,9 @@ export function Navbar() {
 	};
 
 	return (
-		<section className="mb-8 lg:mb-10">
-			<div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-sky-200/20 bg-slate-900/35 px-4 py-3 backdrop-blur-sm sm:px-5">
-				<div className="flex items-center gap-3 sm:gap-4">
+		<section className="mb-1">
+			<div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-sky-200/20 bg-transparent px-4 py-3 backdrop-blur-sm sm:px-5">
+				<Link href="/" className="flex items-center gap-3 sm:gap-4 transition hover:opacity-80">
 					<Image
 						src="/assests/images/logo.png"
 						alt="TypeMetric logo"
@@ -34,7 +34,7 @@ export function Navbar() {
 					<h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
 						TypeMetric
 					</h1>
-				</div>
+				</Link>
 
 				<div className="flex items-center gap-2">
 					{isLoading ? (
