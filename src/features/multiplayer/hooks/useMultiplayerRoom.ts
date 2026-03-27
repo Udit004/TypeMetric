@@ -158,6 +158,8 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
 
       if (message.type === "race:countdown") {
         const payload = message.payload as { remainingSeconds?: number } | undefined;
+        setResults([]);
+        setWinnerUserId(null);
         setCountdownSeconds(payload?.remainingSeconds ?? null);
         return;
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useMultiplayerRoom } from "../hooks/useMultiplayerRoom";
@@ -17,6 +18,7 @@ interface MultiplayerRaceViewProps {
 }
 
 export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
+  const router = useRouter();
   const { user, token, isAuthenticated } = useAuth();
   const {
     room,
@@ -155,6 +157,11 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     }
   };
 
+  const handleLeaveRoom = () => {
+    leaveRoom();
+    router.push("/multiplayer");
+  };
+
   if (!isAuthenticated) {
     return (
       <section className="rounded-3xl border border-rose-200/20 bg-rose-500/10 p-6 text-rose-100">
@@ -189,18 +196,18 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           >
             {didCopyLink ? "Copied" : "Copy Invite Link"}
           </button>
-          {isHost && room?.status === "waiting" ? (
+          {isHost && (room?.status === "waiting" || room?.status === "finished") ? (
             <button
               type="button"
               onClick={startRace}
               className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300"
             >
-              Start Race
+              {room?.status === "finished" ? "Start Next Race" : "Start Race"}
             </button>
           ) : null}
           <button
             type="button"
-            onClick={leaveRoom}
+            onClick={handleLeaveRoom}
             className="rounded-lg border border-rose-200/20 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20"
           >
             Leave
