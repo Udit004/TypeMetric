@@ -13,10 +13,19 @@ export function Navbar() {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 	const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 	const [authMode, setAuthMode] = useState<Mode>("login");
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 	const openAuthModal = (mode: Mode) => {
 		setAuthMode(mode);
 		setIsAuthModalOpen(true);
+	};
+
+	const toggleMobileMenu = () => {
+		setIsMobileMenuOpen(!isMobileMenuOpen);
+	};
+
+	const closeMobileMenu = () => {
+		setIsMobileMenuOpen(false);
 	};
 
 	return (
@@ -36,7 +45,8 @@ export function Navbar() {
 					</h1>
 				</Link>
 
-				<div className="flex items-center gap-2">
+				{/* Desktop Navigation */}
+				<div className="hidden sm:flex items-center gap-2">
 					{isLoading ? (
 						<span className="rounded-lg border border-white/10 bg-slate-900/50 px-3 py-1.5 text-xs text-slate-300">
 							Checking session...
@@ -79,7 +89,78 @@ export function Navbar() {
 						</>
 					)}
 				</div>
+
+				{/* Mobile Hamburger Menu Button */}
+				<button
+					type="button"
+					onClick={toggleMobileMenu}
+					className="sm:hidden flex flex-col gap-1.5 cursor-pointer"
+					aria-label="Toggle menu"
+				>
+					<span className={`w-6 h-0.5 bg-white transition-all ${isMobileMenuOpen ? "rotate-45 translate-y-2" : ""}`}></span>
+					<span className={`w-6 h-0.5 bg-white transition-all ${isMobileMenuOpen ? "opacity-0" : ""}`}></span>
+					<span className={`w-6 h-0.5 bg-white transition-all ${isMobileMenuOpen ? "-rotate-45 -translate-y-2" : ""}`}></span>
+				</button>
 			</div>
+
+			{/* Mobile Menu */}
+			{isMobileMenuOpen && (
+				<div className="sm:hidden mt-2 rounded-2xl border border-sky-200/20 bg-transparent backdrop-blur-sm px-4 py-3">
+					<div className="space-y-3">
+						{isLoading ? (
+							<span className="block rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-xs text-slate-300">
+								Checking session...
+							</span>
+						) : isAuthenticated && user ? (
+							<>
+								<Link
+									href="/multiplayer"
+									onClick={closeMobileMenu}
+									className="block rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20 text-center"
+								>
+									Multiplayer
+								</Link>
+								<div className="rounded-lg border border-emerald-200/30 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-100 text-center">
+									{user.name}
+								</div>
+								<button
+									type="button"
+									onClick={() => {
+										logout();
+										closeMobileMenu();
+									}}
+									className="w-full rounded-lg border border-emerald-200/30 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-300/20 cursor-pointer"
+								>
+									Logout
+								</button>
+							</>
+						) : (
+							<>
+								<button
+									type="button"
+									onClick={() => {
+										openAuthModal("login");
+										closeMobileMenu();
+									}}
+									className="w-full rounded-lg border border-white/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 cursor-pointer"
+								>
+									Login
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										openAuthModal("register");
+										closeMobileMenu();
+									}}
+									className="w-full rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300 cursor-pointer"
+								>
+									Sign up
+								</button>
+							</>
+						)}
+					</div>
+				</div>
+			)}
 
 			<AuthPanel
 				isOpen={isAuthModalOpen}
