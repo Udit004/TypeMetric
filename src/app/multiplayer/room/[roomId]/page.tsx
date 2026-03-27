@@ -1,4 +1,4 @@
-import { MultiplayerRoomClient } from "@/features/multiplayer/components/MultiplayerRoomClient";
+import { MultiplayerRoomClient } from "@/features/multiplayer/pages/MultiplayerRoomClient";
 
 interface MultiplayerRoomPageProps {
   params: Promise<{

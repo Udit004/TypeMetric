@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-import { createRoomApi } from "../services/multiplayerRoomService";
+import { createRoomApi } from "../../services/multiplayerRoomService";
 import { useAuth } from "@/share/hooks/useAuth";
 
 export function MultiplayerCreate() {

@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { joinRoomApi } from "../services/multiplayerRoomService";
+import { joinRoomApi } from "../../services/multiplayerRoomService";
 import { useAuth } from "@/share/hooks/useAuth";
 
 function normalizeRoomCode(value: string): string {

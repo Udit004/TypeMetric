@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MultiplayerRaceView } from "@/features/multiplayer/components/MultiplayerRaceView";
-import { RoomAuthModal } from "@/features/multiplayer/components/RoomAuthModal";
+import { MultiplayerRaceView } from "@/features/multiplayer/components/racing/MultiplayerRaceView";
+import { RoomAuthModal } from "@/features/multiplayer/components/room/RoomAuthModal";
 import { useAuth } from "@/share/hooks/useAuth";
 
 interface MultiplayerRoomClientProps {
@@ -11,13 +10,7 @@ interface MultiplayerRoomClientProps {
 
 export function MultiplayerRoomClient({ roomId }: MultiplayerRoomClientProps) {
   const { isAuthenticated, isLoading } = useAuth();
-  const [showRoom, setShowRoom] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      setShowRoom(true);
-    }
-  }, [isAuthenticated, isLoading]);
+  const showRoom = !isLoading && isAuthenticated;
 
   if (isLoading) {
     return (

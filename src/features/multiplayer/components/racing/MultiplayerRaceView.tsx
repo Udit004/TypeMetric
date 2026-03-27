@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { useMultiplayerRoom } from "../hooks/useMultiplayerRoom";
-import { getRoomApi, joinRoomApi } from "../services/multiplayerRoomService";
+import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
+import { getRoomApi, joinRoomApi } from "../../services/multiplayerRoomService";
 import { TextRenderer } from "@/features/typing-engine/components/TextRenderer";
 import { useTypingEngine } from "@/features/typing-engine/hooks/useTypingEngine";
 import { calculateAccuracy, calculateWPM } from "@/features/typing-engine/lib/metrics";
