@@ -30,7 +30,9 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     errorMessage,
     clearError,
     joinRoom,
+    syncRoom,
     startRace,
+    hydrateRoom,
     sendProgress,
     leaveRoom,
   } = useMultiplayerRoom(token);
@@ -65,7 +67,8 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       setLoadingMessage("Joining room...");
 
       try {
-        await joinRoomApi(roomId, token);
+        const joined = await joinRoomApi(roomId, token);
+        hydrateRoom(joined.room);
 
         if (isCancelled) {
           return;
@@ -73,7 +76,10 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
         joinRoom(roomId);
         setLoadingMessage("Syncing race state...");
-        await getRoomApi(roomId, token);
+
+        const snapshot = await getRoomApi(roomId, token);
+        hydrateRoom(snapshot.room);
+        syncRoom(roomId);
         setLoadingMessage("");
       } catch {
         if (!isCancelled) {
@@ -87,7 +93,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     return () => {
       isCancelled = true;
     };
-  }, [isAuthenticated, isConnected, joinRoom, roomId, token]);
+  }, [hydrateRoom, isAuthenticated, isConnected, joinRoom, roomId, syncRoom, token]);
 
   useEffect(() => {
     const currentStatus = room?.status ?? null;

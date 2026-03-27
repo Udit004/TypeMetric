@@ -27,6 +27,7 @@ interface UseMultiplayerRoomActions {
   startRace: () => void;
   syncRoom: (roomId: string) => void;
   leaveRoom: () => void;
+  hydrateRoom: (nextRoom: MultiplayerRoom) => void;
   sendProgress: (roomId: string, payload: ProgressPayload) => void;
   clearError: () => void;
 }
@@ -233,6 +234,26 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     send("room:leave", {});
   }, [send]);
 
+  const hydrateRoom = useCallback((nextRoom: MultiplayerRoom) => {
+    setRoom(nextRoom);
+
+    if (nextRoom.status === "waiting") {
+      setCountdownSeconds(null);
+      setRemainingSeconds(null);
+      return;
+    }
+
+    if (nextRoom.status === "countdown") {
+      setRemainingSeconds(null);
+      return;
+    }
+
+    if (nextRoom.status === "finished") {
+      setCountdownSeconds(null);
+      setRemainingSeconds(0);
+    }
+  }, []);
+
   const sendProgress = useCallback(
     (roomId: string, payload: ProgressPayload) => {
       send("race:progress", {
@@ -259,6 +280,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     startRace,
     syncRoom,
     leaveRoom,
+    hydrateRoom,
     sendProgress,
     clearError,
   };
