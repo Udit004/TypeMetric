@@ -1,4 +1,4 @@
-import { MultiplayerRaceView } from "@/features/multiplayer/components/MultiplayerRaceView";
+import { MultiplayerRoomClient } from "@/features/multiplayer/components/MultiplayerRoomClient";
 
 interface MultiplayerRoomPageProps {
   params: Promise<{
@@ -11,5 +11,5 @@ export default async function MultiplayerRoomPage({
 }: MultiplayerRoomPageProps) {
   const { roomId } = await params;
 
-  return <MultiplayerRaceView roomId={roomId} />;
+  return <MultiplayerRoomClient roomId={roomId} />;
 }
