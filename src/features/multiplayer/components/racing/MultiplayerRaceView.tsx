@@ -192,6 +192,20 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     );
   }
 
+  if (isRaceFinished) {
+    return (
+      <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
+        <RaceCompletionPanel
+          participants={participants}
+          results={results}
+          winnerUserId={winnerUserId}
+          isHost={isHost}
+          onStartNextRace={startRace}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
       <RaceRoomHeader
@@ -205,27 +219,16 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-        {isRaceFinished ? (
-          <RaceCompletionPanel
-            participants={participants}
-            results={results}
-            winnerUserId={winnerUserId}
-            isHost={isHost}
-            onStartNextRace={startRace}
-          />
-        ) : (
-          <RaceTypingPanel
-            loadingMessage={loadingMessage}
-            countdownSeconds={countdownSeconds}
-            remainingSeconds={remainingSeconds}
-            roomStatus={room?.status}
-            activeText={activeText}
-            typedCharacters={typedCharacters}
-            currentIndex={currentIndex}
-            onRestart={resetTyping}
-          />
-        )}
-
+        <RaceTypingPanel
+          loadingMessage={loadingMessage}
+          countdownSeconds={countdownSeconds}
+          remainingSeconds={remainingSeconds}
+          roomStatus={room?.status}
+          activeText={activeText}
+          typedCharacters={typedCharacters}
+          currentIndex={currentIndex}
+          onRestart={resetTyping}
+        />
         <div className="space-y-3 rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4">
           <RaceTrackView
             participants={participants}
@@ -235,7 +238,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           />
           <RaceLeaderboard participants={participants} />
         </div>
-      </div>
+        </div>
 
       {!isConnected ? (
         <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
@@ -252,6 +255,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           {errorMessage} (click to dismiss)
         </button>
       ) : null}
+
     </section>
   );
 }
