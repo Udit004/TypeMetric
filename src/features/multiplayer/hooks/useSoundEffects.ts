@@ -93,6 +93,14 @@ export function useSoundEffects(options: UseSoundEffectsOptions = {}) {
     void playSound("victory", "/sounds/victory.mp3");
   }, [playSound]);
 
+  const stopCountdownTick = useCallback(() => {
+    const audio = cacheRef.current.countdown;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }, []);
+
   useEffect(() => {
     Object.values(cacheRef.current).forEach((audio) => {
       if (audio) {
@@ -134,6 +142,7 @@ export function useSoundEffects(options: UseSoundEffectsOptions = {}) {
     playRaceStart,
     playCheering,
     playVictory,
+    stopCountdownTick,
     enableSoundOnInteraction,
   };
 }

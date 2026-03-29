@@ -46,7 +46,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   const [loadingMessage, setLoadingMessage] = useState("Joining room...");
   const [didCopyLink, setDidCopyLink] = useState(false);
-  const { playCountdownTick, playRaceStart, playCheering, playVictory, enableSoundOnInteraction } =
+  const { playCountdownTick, playRaceStart, playCheering, playVictory, stopCountdownTick, enableSoundOnInteraction } =
     useSoundEffects({ enabled: true, volume: 0.3 });
 
   const participants = useMemo(() => room?.participants ?? [], [room?.participants]);
@@ -80,11 +80,12 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       playCountdownTick();
     }
 
-    // Play race start sound on 0
+    // Play race start sound on 0 and stop countdown tick
     if (countdownSeconds === 0) {
+      stopCountdownTick();
       playRaceStart();
     }
-  }, [countdownSeconds, playCountdownTick, playRaceStart]);
+  }, [countdownSeconds, playCountdownTick, playRaceStart, stopCountdownTick]);
 
   // Play cheering sounds during race
   useEffect(() => {
@@ -295,7 +296,12 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           results={results}
           winnerUserId={winnerUserId}
           isHost={isHost}
+          roomId={roomId}
+          didCopyLink={didCopyLink}
+          roomStatus={room?.status}
           onStartNextRace={startRace}
+          onCopyInviteLink={handleCopyInviteLink}
+          onLeaveRoom={handleLeaveRoom}
         />
       </section>
     );

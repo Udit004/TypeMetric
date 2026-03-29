@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { Howl } from "howler";
-import { MultiplayerPlayer, RaceResult } from "../../types/multiplayerTypes";
+import { MultiplayerPlayer, RaceResult, RoomStatus } from "../../types/multiplayerTypes";
+import { RaceRoomHeader } from "../racing/RaceRoomHeader";
 import { RaceCompletionScene } from "./RaceCompletionScene";
 import { type CompletionRow } from "./RaceCompletionPanel2D";
 
@@ -11,7 +12,12 @@ interface RaceCompletionPanelProps {
   results: RaceResult[];
   winnerUserId: string | null;
   isHost: boolean;
+  roomId: string;
+  didCopyLink: boolean;
+  roomStatus: RoomStatus | undefined;
   onStartNextRace: () => void;
+  onCopyInviteLink: () => void;
+  onLeaveRoom: () => void;
 }
 
 const SCORE_WEIGHTS = {
@@ -96,7 +102,12 @@ export function RaceCompletionPanel({
   results,
   winnerUserId,
   isHost,
+  roomId,
+  didCopyLink,
+  roomStatus,
   onStartNextRace,
+  onCopyInviteLink,
+  onLeaveRoom,
 }: RaceCompletionPanelProps) {
   const resultMusicRef = useRef<Howl | null>(null);
 
@@ -134,6 +145,15 @@ export function RaceCompletionPanel({
 
   return (
     <div className="space-y-6 rounded-2xl border border-cyan-200/20 bg-linear-to-br from-slate-950 via-slate-900 to-cyan-950/50 p-4 sm:p-6">
+      <RaceRoomHeader
+        roomId={roomId}
+        didCopyLink={didCopyLink}
+        isHost={isHost}
+        roomStatus={roomStatus}
+        onCopyInviteLink={onCopyInviteLink}
+        onStartRace={onStartNextRace}
+        onLeaveRoom={onLeaveRoom}
+      />
       <div className="relative overflow-hidden rounded-xl border border-cyan-200/25 bg-linear-to-r from-emerald-400/10 via-cyan-400/10 to-sky-400/10 p-4 sm:p-5">
         <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-300/20 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-300/20 blur-2xl" />
