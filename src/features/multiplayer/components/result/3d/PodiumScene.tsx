@@ -28,6 +28,37 @@ const PODIUM_CONFIG: Record<PodiumRank, { position: [number, number, number]; he
 
 const RANK_ORDER: PodiumRank[] = [2, 1, 3];
 
+const RESULT_MODEL_POOL = [
+  "/models/resultModels/avatar1.glb",
+  "/models/resultModels/avatar2.glb",
+  "/models/resultModels/avatar3.glb",
+] as const;
+
+function hashSeed(value: string): number {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 2147483647;
+  }
+
+  return hash;
+}
+
+function seededShuffle<T>(items: readonly T[], seed: number): T[] {
+  const list = [...items];
+  let state = seed || 1;
+
+  for (let index = list.length - 1; index > 0; index -= 1) {
+    state = (state * 48271) % 2147483647;
+    const randomIndex = state % (index + 1);
+    const current = list[index];
+    list[index] = list[randomIndex] as T;
+    list[randomIndex] = current as T;
+  }
+
+  return list;
+}
+
 function Stage() {
   return (
     <>
@@ -107,7 +138,25 @@ export const PodiumScene = memo(function PodiumScene({ players }: PodiumScenePro
       .sort((a, b) => a.rank - b.rank)
       .slice(0, 3);
 
-    return filtered;
+    const seedSource = filtered
+      .map((player) => `${player.id}-${player.rank}-${player.score.toFixed(2)}`)
+      .join("|");
+    const shuffledFallbacks = seededShuffle(RESULT_MODEL_POOL, hashSeed(seedSource));
+
+    const withUniqueFallbacks = filtered.map((player, index) => {
+      if (player.avatarUrl) {
+        return player;
+      }
+
+      const fallbackAvatar = shuffledFallbacks[index % shuffledFallbacks.length] ?? RESULT_MODEL_POOL[0];
+
+      return {
+        ...player,
+        avatarUrl: fallbackAvatar,
+      };
+    });
+
+    return withUniqueFallbacks;
   }, [players]);
 
   return (
