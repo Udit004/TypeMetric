@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { RaceCompletionPanel } from "./RaceCompletionPanel";
+import { RaceCompletionPanel } from "../result/RaceCompletionPanel";
 import { RaceLeaderboard } from "./RaceLeaderboard";
 import { RaceRoomHeader } from "./RaceRoomHeader";
 import { RaceTrackView } from "./RaceTrackView";
