@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { Howl } from "howler";
 import { MultiplayerPlayer, RaceResult } from "../../types/multiplayerTypes";
 import { RaceCompletionScene } from "./RaceCompletionScene";
 import { type CompletionRow } from "./RaceCompletionPanel2D";
@@ -94,10 +98,39 @@ export function RaceCompletionPanel({
   isHost,
   onStartNextRace,
 }: RaceCompletionPanelProps) {
+  const resultMusicRef = useRef<Howl | null>(null);
+
   const rows = toCompletionRows(participants, results);
   const winner =
     rows.find((row) => row.userId === winnerUserId) || rows.find((row) => row.rank === 1) || null;
   const topThree = rows.filter((row) => row.rank <= 3);
+
+  useEffect(() => {
+    if (!resultMusicRef.current) {
+      resultMusicRef.current = new Howl({
+        src: ["/sounds/BlackDiamondBGSound.mp3"],
+        loop: true,
+        volume: 0.22,
+        html5: true,
+        preload: true,
+      });
+    }
+
+    const music = resultMusicRef.current;
+
+    if (!music.playing()) {
+      music.play();
+    }
+
+    return () => {
+      music.stop();
+    };
+  }, []);
+
+  const handleStartNextRace = () => {
+    resultMusicRef.current?.stop();
+    onStartNextRace();
+  };
 
   return (
     <div className="space-y-6 rounded-2xl border border-cyan-200/20 bg-linear-to-br from-slate-950 via-slate-900 to-cyan-950/50 p-4 sm:p-6">
@@ -138,7 +171,7 @@ export function RaceCompletionPanel({
         {isHost ? (
           <button
             type="button"
-            onClick={onStartNextRace}
+            onClick={handleStartNextRace}
             className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
           >
             Start New Race

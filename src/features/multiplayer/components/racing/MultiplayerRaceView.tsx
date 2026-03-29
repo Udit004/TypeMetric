@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Howl } from "howler";
 import { RaceCompletionPanel } from "../result/RaceCompletionPanel";
 import { RaceLeaderboard } from "./RaceLeaderboard";
 import { RaceRoomHeader } from "./RaceRoomHeader";
@@ -11,6 +12,7 @@ import { RaceTypingPanel } from "./RaceTypingPanel";
 
 import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
 import { getRoomApi, joinRoomApi } from "../../services/multiplayerRoomService";
+import { useSoundEffects } from "../../hooks/useSoundEffects";
 import { useTypingEngine } from "@/features/typing-engine/hooks/useTypingEngine";
 import { calculateAccuracy, calculateWPM } from "@/features/typing-engine/lib/metrics";
 import { parseTextToCharacters } from "@/features/typing-engine/lib/textParser";
@@ -44,6 +46,9 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   const [loadingMessage, setLoadingMessage] = useState("Joining room...");
   const [didCopyLink, setDidCopyLink] = useState(false);
+  const { playCountdownTick, playRaceStart, playCheering, playVictory, enableSoundOnInteraction } =
+    useSoundEffects({ enabled: true, volume: 0.3 });
+
   const participants = useMemo(() => room?.participants ?? [], [room?.participants]);
 
   const activeText = room?.promptText || "";
@@ -51,6 +56,87 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   const { currentIndex, mistakes, typedCharacters, handleKeyDown, resetTyping } =
     useTypingEngine(activeText);
+  const raceBackgroundSoundRef = useRef<Howl | null>(null);
+
+  // Enable sound on first user interaction
+  useEffect(() => {
+    window.addEventListener("click", enableSoundOnInteraction, { once: true });
+    window.addEventListener("keydown", enableSoundOnInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("click", enableSoundOnInteraction);
+      window.removeEventListener("keydown", enableSoundOnInteraction);
+    };
+  }, [enableSoundOnInteraction]);
+
+  // Play countdown tick sound when countdown changes
+  useEffect(() => {
+    if (countdownSeconds === null || countdownSeconds === undefined) {
+      return;
+    }
+
+    // Play tick for 3, 2, 1 (not for 0)
+    if (countdownSeconds > 0) {
+      playCountdownTick();
+    }
+
+    // Play race start sound on 0
+    if (countdownSeconds === 0) {
+      playRaceStart();
+    }
+  }, [countdownSeconds, playCountdownTick, playRaceStart]);
+
+  // Play cheering sounds during race
+  useEffect(() => {
+    if (room?.status !== "racing" || remainingSeconds === null) {
+      return;
+    }
+
+    // Play cheering at specific intervals (every 10 seconds)
+    if (remainingSeconds > 0 && remainingSeconds % 10 === 0) {
+      playCheering();
+    }
+  }, [remainingSeconds, room?.status, playCheering]);
+
+  // Play victory sound when results arrive
+  useEffect(() => {
+    if (room?.status === "finished" && results.length > 0) {
+      playVictory();
+      playCheering();
+    }
+  }, [room?.status, results, playVictory, playCheering]);
+
+  // Loop race background music only while race is active.
+  useEffect(() => {
+    if (!raceBackgroundSoundRef.current) {
+      raceBackgroundSoundRef.current = new Howl({
+        src: ["/sounds/raceBackgroundSound.mp3"],
+        loop: true,
+        volume: 0.14,
+        html5: true,
+        preload: true,
+      });
+    }
+
+    const raceMusic = raceBackgroundSoundRef.current;
+
+    if (room?.status === "racing") {
+      if (!raceMusic.playing()) {
+        raceMusic.play();
+      }
+      return;
+    }
+
+    raceMusic.stop();
+  }, [room?.status]);
+
+  useEffect(() => {
+    return () => {
+      raceBackgroundSoundRef.current?.stop();
+      raceBackgroundSoundRef.current?.unload();
+      raceBackgroundSoundRef.current = null;
+    };
+  }, []);
 
   const previousStatusRef = useRef<string | null>(null);
 
