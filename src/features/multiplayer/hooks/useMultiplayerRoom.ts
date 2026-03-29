@@ -20,6 +20,7 @@ interface UseMultiplayerRoomState {
   results: RaceResult[];
   winnerUserId: string | null;
   errorMessage: string | null;
+  roomClosed: boolean;
 }
 
 interface UseMultiplayerRoomActions {
@@ -73,6 +74,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
   const [results, setResults] = useState<RaceResult[]>([]);
   const [winnerUserId, setWinnerUserId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [roomClosed, setRoomClosed] = useState(false);
 
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -135,6 +137,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
 
         if (payload?.room) {
           setRoom(payload.room);
+          setRoomClosed(false);
           setResults([]);
           setWinnerUserId(null);
           setCountdownSeconds(null);
@@ -203,6 +206,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
       if (message.type === "room:closed") {
         setErrorMessage("Room is closed");
         setRoom(null);
+        setRoomClosed(true);
       }
     };
 
@@ -276,6 +280,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     results,
     winnerUserId,
     errorMessage,
+    roomClosed,
     joinRoom,
     startRace,
     syncRoom,

@@ -32,6 +32,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     results,
     winnerUserId,
     errorMessage,
+    roomClosed,
     clearError,
     joinRoom,
     syncRoom,
@@ -99,6 +100,14 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       isCancelled = true;
     };
   }, [hydrateRoom, isAuthenticated, isConnected, joinRoom, roomId, syncRoom, token]);
+
+  useEffect(() => {
+    if (!roomClosed) {
+      return;
+    }
+
+    router.push("/multiplayer");
+  }, [roomClosed, router]);
 
   useEffect(() => {
     const currentStatus = room?.status ?? null;
