@@ -9,6 +9,9 @@ interface AvatarProps {
   rank: 1 | 2 | 3;
   avatarUrl?: string;
   color: string;
+  score: number;
+  wpm?: number;
+  accuracy?: number;
   position: [number, number, number];
 }
 
@@ -96,7 +99,39 @@ const CharacterModel = memo(function CharacterModel({ modelPath, rank }: { model
   );
 });
 
-export const Avatar = memo(function Avatar({ id, name, rank, avatarUrl, color, position }: AvatarProps) {
+function StatChip({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color: string;
+}) {
+  return (
+    <group>
+      <mesh>
+        <planeGeometry args={[1.7, 0.38]} />
+        <meshStandardMaterial color="#0f172a" emissive="#0b1220" emissiveIntensity={0.45} transparent opacity={0.86} />
+      </mesh>
+      <Text position={[0, 0.015, 0.02]} fontSize={0.14} color={color} anchorX="center" anchorY="middle">
+        {label} {value}
+      </Text>
+    </group>
+  );
+}
+
+export const Avatar = memo(function Avatar({
+  id,
+  name,
+  rank,
+  avatarUrl,
+  color,
+  score,
+  wpm,
+  accuracy,
+  position,
+}: AvatarProps) {
   const floatRef = useRef<Group>(null);
   const spinRef = useRef<Group>(null);
   const firstRankRingRef = useRef<Mesh>(null);
@@ -151,6 +186,22 @@ export const Avatar = memo(function Avatar({ id, name, rank, avatarUrl, color, p
           {name}
         </Text>
       </Billboard>
+
+      <Billboard follow lockX={false} lockY={false} lockZ={false} position={[0, modelHeight + 0.2, 0.9]}>
+        <StatChip label="Score" value={score.toFixed(2)} color="#fef08a" />
+      </Billboard>
+
+      {typeof wpm === "number" ? (
+        <Billboard follow lockX={false} lockY={false} lockZ={false} position={[-1.05, modelHeight * 0.62, 0]}>
+          <StatChip label="WPM" value={wpm.toFixed(1)} color="#a7f3d0" />
+        </Billboard>
+      ) : null}
+
+      {typeof accuracy === "number" ? (
+        <Billboard follow lockX={false} lockY={false} lockZ={false} position={[1.05, modelHeight * 0.62, 0]}>
+          <StatChip label="ACC" value={`${accuracy.toFixed(1)}%`} color="#bae6fd" />
+        </Billboard>
+      ) : null}
     </group>
   );
 });

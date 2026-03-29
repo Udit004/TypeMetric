@@ -124,6 +124,8 @@ export function RaceCompletionPanel({
             name: row.name,
             rank: row.rank,
             score: row.score,
+            wpm: row.wpm,
+            accuracy: row.accuracy,
           }))}
         />
       </div>

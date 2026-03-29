@@ -9,6 +9,8 @@ export interface RaceCompletionSceneEntry {
   avatarUrl?: string;
   rank: number;
   score: number;
+  wpm?: number;
+  accuracy?: number;
 }
 
 interface RaceCompletionSceneProps {
@@ -31,6 +33,8 @@ export function RaceCompletionScene({ entries }: RaceCompletionSceneProps) {
         avatarUrl: entry.avatarUrl,
         rank: entry.rank,
         score: entry.score,
+        wpm: entry.wpm,
+        accuracy: entry.accuracy,
       }));
   }, [entries]);
 
