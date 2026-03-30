@@ -1,4 +1,5 @@
 import { api } from "@/share/servies/api";
+import { AxiosError } from "axios";
 import {
   CreateRoomResponse,
   GetRoomResponse,
@@ -15,33 +16,56 @@ function authHeader(token: string) {
   };
 }
 
+function toApiError(error: unknown, fallbackMessage: string): Error {
+  const axiosError = error as AxiosError<{ message?: string }>;
+  const apiMessage = axiosError.response?.data?.message;
+
+  if (typeof apiMessage === "string" && apiMessage.trim().length > 0) {
+    return new Error(apiMessage);
+  }
+
+  return new Error(fallbackMessage);
+}
+
 export async function createRoomApi(
   payload: CreateRoomPayload,
   token: string
 ): Promise<CreateRoomResponse> {
-  const response = await api.post<CreateRoomResponse>("/multiplayer/rooms", payload, {
-    headers: authHeader(token),
-  });
+  try {
+    const response = await api.post<CreateRoomResponse>("/multiplayer/rooms", payload, {
+      headers: authHeader(token),
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    throw toApiError(error, "Failed to create room");
+  }
 }
 
 export async function joinRoomApi(roomId: string, token: string): Promise<JoinRoomResponse> {
-  const response = await api.post<JoinRoomResponse>(
-    `/multiplayer/rooms/${roomId}/join`,
-    {},
-    {
-      headers: authHeader(token),
-    }
-  );
+  try {
+    const response = await api.post<JoinRoomResponse>(
+      `/multiplayer/rooms/${roomId}/join`,
+      {},
+      {
+        headers: authHeader(token),
+      }
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    throw toApiError(error, "Failed to join room");
+  }
 }
 
 export async function getRoomApi(roomId: string, token: string): Promise<GetRoomResponse> {
-  const response = await api.get<GetRoomResponse>(`/multiplayer/rooms/${roomId}`, {
-    headers: authHeader(token),
-  });
+  try {
+    const response = await api.get<GetRoomResponse>(`/multiplayer/rooms/${roomId}`, {
+      headers: authHeader(token),
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    throw toApiError(error, "Failed to fetch room");
+  }
 }

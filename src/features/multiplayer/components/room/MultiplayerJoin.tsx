@@ -61,8 +61,12 @@ export function MultiplayerJoin() {
     try {
       await joinRoomApi(normalizedCode, token);
       router.push(`/multiplayer/room/${normalizedCode}`);
-    } catch {
-      setErrorMessage("Room not found or unavailable. Check the code and try again.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Room not found or unavailable. Check the code and try again.";
+      setErrorMessage(message);
     } finally {
       setIsJoining(false);
     }

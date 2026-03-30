@@ -160,24 +160,38 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       setLoadingMessage("Joining room...");
 
       try {
-        const joined = await joinRoomApi(roomId, token);
-        hydrateRoom(joined.room);
+        let wasJoinedViaRest = false;
+
+        try {
+          const joined = await joinRoomApi(roomId, token);
+          hydrateRoom(joined.room);
+          wasJoinedViaRest = true;
+        } catch {
+          // If REST join fails (e.g. already participant), attempt a room snapshot fallback.
+          const snapshot = await getRoomApi(roomId, token);
+          hydrateRoom(snapshot.room);
+        }
 
         if (isCancelled) {
           return;
         }
 
-        joinRoom(roomId);
         setLoadingMessage("Syncing race state...");
 
-        const snapshot = await getRoomApi(roomId, token);
-        hydrateRoom(snapshot.room);
+        if (!wasJoinedViaRest) {
+          // Ensure backend websocket context is attached to this room.
+          joinRoom(roomId);
+        }
+
         syncRoom(roomId);
         setLoadingMessage("");
-      } catch {
-        if (!isCancelled) {
-          setLoadingMessage("");
+      } catch (error) {
+        if (isCancelled) {
+          return;
         }
+
+        const message = error instanceof Error ? error.message : "Failed to join room";
+        setLoadingMessage(message);
       }
     };
 
