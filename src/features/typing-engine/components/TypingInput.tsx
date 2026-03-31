@@ -156,7 +156,7 @@ export function TypingInput({
   return (
     <section
       aria-label="Typing engine"
-      className="space-y-6 rounded-[1.4rem] border border-sky-200/20 bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:p-6"
+      className="space-y-6 rounded-[1.4rem]  bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:p-6"
     >
       <TextRenderer
         text={resolvedText}

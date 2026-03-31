@@ -62,8 +62,8 @@ export function AuthPanel({ isOpen, onClose, initialMode = "login" }: AuthPanelP
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 px-4">
-        <section className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/95 p-5 text-sm text-slate-300 shadow-2xl">
+      <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-slate-950/50">
+        <section className="rounded-2xl border border-white/10 bg-slate-900/95 p-5 text-sm text-slate-300 shadow-2xl w-full max-w-md">
           Loading auth session...
         </section>
       </div>
@@ -71,9 +71,9 @@ export function AuthPanel({ isOpen, onClose, initialMode = "login" }: AuthPanelP
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 px-4" onClick={onClose}>
+    <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-slate-950/50" onClick={onClose}>
       <section
-        className="w-full max-w-md rounded-2xl border border-sky-200/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md"
+        className="rounded-2xl border border-sky-200/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md w-full max-w-md mx-4"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between gap-2">

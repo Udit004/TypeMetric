@@ -198,7 +198,7 @@ export function TextRenderer({
     <div
       ref={containerRef}
       aria-label="Typing text"
-      className="relative rounded-2xl border border-sky-200/20 bg-slate-900/75 p-5 font-mono text-lg leading-8 shadow-xl shadow-slate-950/45 sm:text-xl"
+      className="relative rounded-2xl  bg-slate-900/75 p-5 font-mono text-lg leading-8 shadow-xl shadow-slate-950/45 sm:text-xl"
     >
       {visibleLineRanges.map((lineRange, lineIndex) => (
         <div
