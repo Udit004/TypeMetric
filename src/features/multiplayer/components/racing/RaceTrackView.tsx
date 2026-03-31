@@ -65,7 +65,7 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
   }, [maxObservedWpm, participants, rankMap, roomStatus, winnerUserId]);
 
   return (
-    <div className="rounded-xl border border-cyan-200/20 bg-slate-950/60 p-3">
+    <div className="rounded-xl  bg-slate-950/60 p-3">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-cyan-100">
           Live Track View

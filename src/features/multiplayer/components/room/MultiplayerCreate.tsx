@@ -82,7 +82,7 @@ export function MultiplayerCreate() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="cursor-pointer rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Creating room..." : "Create room"}
         </button>

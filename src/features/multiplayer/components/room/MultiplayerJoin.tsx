@@ -83,13 +83,13 @@ export function MultiplayerJoin() {
   };
 
   return (
-    <section className="rounded-3xl border border-sky-200/20 bg-slate-950/40 p-6 backdrop-blur-md">
+    <section className="flex h-full flex-col rounded-3xl border border-sky-200/20 bg-slate-950/40 p-6 backdrop-blur-md">
       <h2 className="text-2xl font-black text-white">Join Room</h2>
       <p className="mt-2 text-sm text-slate-300">
         Paste a room code to instantly join your friend&apos;s multiplayer race.
       </p>
 
-      <form className="mt-6 space-y-4" onSubmit={handleJoin}>
+      <form className="mt-6 flex flex-1 flex-col gap-4" onSubmit={handleJoin}>
         <label className="block space-y-2">
           <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
             Room Code
@@ -105,7 +105,7 @@ export function MultiplayerJoin() {
             <button
               type="button"
               onClick={handlePaste}
-              className="rounded-lg border border-white/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
+              className="cursor-pointer rounded-lg border border-white/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
             >
               Paste
             </button>
@@ -121,7 +121,7 @@ export function MultiplayerJoin() {
         <button
           type="submit"
           disabled={isJoining}
-          className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-auto cursor-pointer self-start rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isJoining ? "Joining..." : "Join room"}
         </button>
