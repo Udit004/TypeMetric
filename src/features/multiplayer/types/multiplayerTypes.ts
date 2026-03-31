@@ -27,6 +27,15 @@ export interface MultiplayerRoom {
   startedAt: number | null;
   endsAt: number | null;
   participants: MultiplayerPlayer[];
+  chatMessages: ChatMessage[];
+}
+
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  text: string;
+  sentAt: number;
 }
 
 export interface RaceResult {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { MultiplayerRoom, RaceResult } from "../types/multiplayerTypes";
+import { ChatMessage, MultiplayerRoom, RaceResult } from "../types/multiplayerTypes";
 
 interface ProgressPayload {
   typedCharacters: number;
@@ -30,6 +30,7 @@ interface UseMultiplayerRoomActions {
   leaveRoom: () => void;
   hydrateRoom: (nextRoom: MultiplayerRoom) => void;
   sendProgress: (roomId: string, payload: ProgressPayload) => void;
+  sendChatMessage: (roomId: string, text: string) => void;
   clearError: () => void;
 }
 
@@ -207,6 +208,31 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
         setErrorMessage("Room is closed");
         setRoom(null);
         setRoomClosed(true);
+        return;
+      }
+
+      if (message.type === "chat:message") {
+        const payload = message.payload as { roomId?: string; message?: ChatMessage } | undefined;
+
+        if (!payload?.roomId || !payload.message) {
+          return;
+        }
+
+        const incomingMessage = payload.message;
+        const incomingRoomId = payload.roomId;
+
+        setRoom((previousRoom) => {
+          if (!previousRoom || previousRoom.roomId !== incomingRoomId) {
+            return previousRoom;
+          }
+
+          const nextMessages = [...(previousRoom.chatMessages ?? []), incomingMessage].slice(-100);
+
+          return {
+            ...previousRoom,
+            chatMessages: nextMessages,
+          };
+        });
       }
     };
 
@@ -268,6 +294,16 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     [send]
   );
 
+  const sendChatMessage = useCallback(
+    (roomId: string, text: string) => {
+      send("chat:send", {
+        roomId,
+        text,
+      });
+    },
+    [send]
+  );
+
   const clearError = useCallback(() => {
     setErrorMessage(null);
   }, []);
@@ -287,6 +323,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     leaveRoom,
     hydrateRoom,
     sendProgress,
+    sendChatMessage,
     clearError,
   };
 }

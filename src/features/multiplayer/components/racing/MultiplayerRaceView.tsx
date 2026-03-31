@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Howl } from "howler";
 import { RaceCompletionPanel } from "../result/RaceCompletionPanel";
 import { RaceLeaderboard } from "./RaceLeaderboard";
+import { RoomChatPanel } from "./RoomChatPanel";
 import { RaceRoomHeader } from "./RaceRoomHeader";
 import { RaceTrackView } from "./RaceTrackView";
 import { RaceTypingPanel } from "./RaceTypingPanel";
@@ -41,6 +42,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     startRace,
     hydrateRoom,
     sendProgress,
+    sendChatMessage,
     leaveRoom,
   } = useMultiplayerRoom(token);
 
@@ -333,27 +335,42 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
         onLeaveRoom={handleLeaveRoom}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-        <RaceTypingPanel
-          loadingMessage={loadingMessage}
-          countdownSeconds={countdownSeconds}
-          remainingSeconds={remainingSeconds}
-          roomStatus={room?.status}
-          activeText={activeText}
-          typedCharacters={typedCharacters}
-          currentIndex={currentIndex}
-          onRestart={resetTyping}
-        />
-        <div className="space-y-3 rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_24rem] md:grid-rows-[minmax(0,1fr)_auto]">
+        <div className="min-h-68 md:col-start-1 md:row-start-1">
+          <RaceTypingPanel
+            loadingMessage={loadingMessage}
+            countdownSeconds={countdownSeconds}
+            remainingSeconds={remainingSeconds}
+            roomStatus={room?.status}
+            activeText={activeText}
+            typedCharacters={typedCharacters}
+            currentIndex={currentIndex}
+            onRestart={resetTyping}
+          />
+        </div>
+
+        <div className="rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4 md:col-start-1 md:row-start-2">
           <RaceTrackView
             participants={participants}
             results={results}
             winnerUserId={winnerUserId}
             roomStatus={room?.status}
           />
-          <RaceLeaderboard participants={participants} />
+          <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/55 p-3">
+            <RaceLeaderboard participants={participants} />
+          </div>
         </div>
+
+        <div className="md:col-start-2 md:row-span-2 md:min-h-136">
+          <RoomChatPanel
+            messages={room?.chatMessages ?? []}
+            currentUserId={user?.id ?? null}
+            isConnected={isConnected}
+            onSendMessage={(text) => sendChatMessage(roomId, text)}
+            className="h-full"
+          />
         </div>
+      </div>
 
       {!isConnected ? (
         <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">

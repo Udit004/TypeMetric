@@ -12,11 +12,11 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="relative min-h-screen">
       <div className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm ">
-        <div className="mx-auto w-full max-w-6xl px-4 py-3 ">
+        <div className="w-full px-3 py-3 md:px-5">
           <Navbar />
         </div>
       </div>
-      <main className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pt-32 pb-10 sm:px-8">
+      <main className="relative flex min-h-screen w-full flex-col px-3 pt-30 pb-8 md:px-5">
         {children}
       </main>
     </div>
