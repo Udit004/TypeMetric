@@ -42,7 +42,7 @@ export function RaceTypingPanel({
         </p>
       ) : null}
 
-      {activeText && roomStatus === "racing" ? (
+      {activeText && (roomStatus === "racing" || roomStatus === "finished") ? (
         <TextRenderer
           text={activeText}
           typedCharacters={typedCharacters}
