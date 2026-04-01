@@ -13,6 +13,7 @@ interface RaceCompletionPanelProps {
   winnerUserId: string | null;
   isHost: boolean;
   roomId: string;
+  token: string | null;
   didCopyLink: boolean;
   roomStatus: RoomStatus | undefined;
   onStartNextRace: () => void;
@@ -104,6 +105,7 @@ export function RaceCompletionPanel({
   winnerUserId,
   isHost,
   roomId,
+  token,
   didCopyLink,
   roomStatus,
   onStartNextRace,
@@ -149,6 +151,7 @@ export function RaceCompletionPanel({
     <div className="space-y-6 rounded-2xl border border-cyan-200/20 bg-linear-to-br from-slate-950 via-slate-900 to-cyan-950/50 p-4 sm:p-6">
       <RaceRoomHeader
         roomId={roomId}
+        token={token}
         didCopyLink={didCopyLink}
         isHost={isHost}
         roomStatus={roomStatus}

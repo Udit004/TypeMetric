@@ -10,7 +10,7 @@ import { RoomChatPanel } from "./RoomChatPanel";
 import { RaceRoomHeader } from "./RaceRoomHeader";
 import { RaceTrackView } from "./RaceTrackView";
 import { RaceTypingPanel } from "./RaceTypingPanel";
-import { RoomVoicePanel } from "./RoomVoicePanel";
+import { RoomFriendInvitePanel } from "./RoomFriendInvitePanel";
 import { RoomLobbyView } from "../room/RoomLobbyView";
 
 import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
@@ -320,6 +320,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           winnerUserId={winnerUserId}
           isHost={isHost}
           roomId={roomId}
+          token={token}
           didCopyLink={didCopyLink}
           roomStatus={room?.status}
           onStartNextRace={startRace}
@@ -336,6 +337,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
         <RaceRoomHeader
           roomId={roomId}
+          token={token}
           didCopyLink={didCopyLink}
           isHost={isHost}
           roomStatus={room?.status}
@@ -354,7 +356,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           />
 
           <div className="grid gap-4 md:min-h-136 md:grid-rows-[auto_minmax(0,1fr)]">
-            <RoomVoicePanel roomId={roomId} token={token} />
+            <RoomFriendInvitePanel roomId={roomId} token={token} />
             <RoomChatPanel
               messages={room?.chatMessages ?? []}
               currentUserId={user?.id ?? null}
@@ -391,6 +393,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
       <RaceRoomHeader
         roomId={roomId}
+        token={token}
         didCopyLink={didCopyLink}
         isHost={isHost}
         roomStatus={room?.status}
@@ -426,7 +429,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
         </div>
 
         <div className="grid gap-4 md:col-start-2 md:row-span-2 md:min-h-136 md:grid-rows-[auto_minmax(0,1fr)]">
-          <RoomVoicePanel roomId={roomId} token={token} />
+          <RoomFriendInvitePanel roomId={roomId} token={token} />
           <RoomChatPanel
             messages={room?.chatMessages ?? []}
             currentUserId={user?.id ?? null}

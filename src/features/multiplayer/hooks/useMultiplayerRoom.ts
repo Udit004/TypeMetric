@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { buildWsUrl } from "@/share/lib/ws";
 import { ChatMessage, MultiplayerRoom, RaceResult } from "../types/multiplayerTypes";
 
 interface ProgressPayload {
@@ -40,29 +41,6 @@ interface UseMultiplayerRoomActions {
 
 interface UseMultiplayerRoomReturn extends UseMultiplayerRoomState, UseMultiplayerRoomActions {}
 
-function resolveWsBaseUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_WS_BASE_URL;
-
-  if (explicit && explicit.trim().length > 0) {
-    return explicit.replace(/\/$/, "");
-  }
-
-  const apiBase =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api/v1";
-
-  const normalized = apiBase.replace(/\/api\/v1\/?$/, "");
-
-  if (normalized.startsWith("https://")) {
-    return normalized.replace("https://", "wss://");
-  }
-
-  if (normalized.startsWith("http://")) {
-    return normalized.replace("http://", "ws://");
-  }
-
-  return "ws://localhost:5000";
-}
-
 function parseMessage(rawData: string): { type?: string; payload?: unknown } {
   try {
     return JSON.parse(rawData) as { type?: string; payload?: unknown };
@@ -89,13 +67,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
   const socketRef = useRef<WebSocket | null>(null);
 
   const wsUrl = useMemo(() => {
-    if (!token) {
-      return null;
-    }
-
-    const base = resolveWsBaseUrl();
-    const encodedToken = encodeURIComponent(token);
-    return `${base}/ws?token=${encodedToken}`;
+    return buildWsUrl(token);
   }, [token]);
 
   const send = useCallback((type: string, payload: unknown) => {
