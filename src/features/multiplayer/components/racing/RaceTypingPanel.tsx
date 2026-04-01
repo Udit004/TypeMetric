@@ -42,7 +42,7 @@ export function RaceTypingPanel({
         </p>
       ) : null}
 
-      {activeText ? (
+      {activeText && roomStatus === "racing" ? (
         <TextRenderer
           text={activeText}
           typedCharacters={typedCharacters}
@@ -52,7 +52,9 @@ export function RaceTypingPanel({
         />
       ) : (
         <p className="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">
-          Waiting for room state...
+          {roomStatus === "countdown"
+            ? "Get ready... prompt will appear when race starts."
+            : "Waiting in lobby. Prompt is hidden until race begins."}
         </p>
       )}
     </div>

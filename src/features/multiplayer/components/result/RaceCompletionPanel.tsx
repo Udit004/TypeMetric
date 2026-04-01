@@ -16,6 +16,7 @@ interface RaceCompletionPanelProps {
   didCopyLink: boolean;
   roomStatus: RoomStatus | undefined;
   onStartNextRace: () => void;
+  onReturnToLobby: () => void;
   onCopyInviteLink: () => void;
   onLeaveRoom: () => void;
 }
@@ -106,6 +107,7 @@ export function RaceCompletionPanel({
   didCopyLink,
   roomStatus,
   onStartNextRace,
+  onReturnToLobby,
   onCopyInviteLink,
   onLeaveRoom,
 }: RaceCompletionPanelProps) {
@@ -188,17 +190,29 @@ export function RaceCompletionPanel({
       */}
 
       <div>
-        {isHost ? (
-          <button
-            type="button"
-            onClick={handleStartNextRace}
-            className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-          >
-            Start New Race
-          </button>
-        ) : (
-          <p className="text-xs text-slate-300">Waiting for host to start a new race...</p>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {isHost ? (
+            <>
+              <button
+                type="button"
+                onClick={handleStartNextRace}
+                className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                Start New Race
+              </button>
+              <button
+                type="button"
+                onClick={onReturnToLobby}
+                className="rounded-lg border border-cyan-200/30 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-slate-800"
+              >
+                Return Everyone To Lobby
+              </button>
+            </>
+          ) : (
+            <p className="text-xs text-slate-300">Waiting for host to start a new race...</p>
+          )}
+          <p className="text-xs text-slate-300">Auto return to lobby within 60s</p>
+        </div>
       </div>
     </div>
   );

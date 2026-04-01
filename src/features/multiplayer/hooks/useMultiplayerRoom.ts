@@ -28,6 +28,7 @@ interface UseMultiplayerRoomState {
 interface UseMultiplayerRoomActions {
   joinRoom: (roomId: string) => void;
   startRace: () => void;
+  returnToLobby: () => void;
   syncRoom: (roomId: string) => void;
   leaveRoom: () => void;
   hydrateRoom: (nextRoom: MultiplayerRoom) => void;
@@ -163,6 +164,8 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
           setRoom(payload.room);
 
           if (payload.room.status === "waiting") {
+            setResults([]);
+            setWinnerUserId(null);
             setCountdownSeconds(null);
             setRemainingSeconds(null);
           }
@@ -318,6 +321,10 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     send("room:start", {});
   }, [send]);
 
+  const returnToLobby = useCallback(() => {
+    send("room:return-lobby", {});
+  }, [send]);
+
   const leaveRoom = useCallback(() => {
     send("room:leave", {});
   }, [send]);
@@ -389,6 +396,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     hostChangeNotification,
     joinRoom,
     startRace,
+    returnToLobby,
     syncRoom,
     leaveRoom,
     hydrateRoom,

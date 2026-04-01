@@ -1,0 +1,82 @@
+.enterBase {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.enterScene {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 700ms ease 100ms, transform 700ms ease 100ms;
+}
+
+.enterCard {
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.enterCta {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cardsGrid > article:nth-child(1) {
+  transition-delay: 180ms;
+}
+
+.cardsGrid > article:nth-child(2) {
+  transition-delay: 250ms;
+}
+
+.cardsGrid > article:nth-child(3) {
+  transition-delay: 320ms;
+}
+
+.cardsGrid > article:nth-child(4) {
+  transition-delay: 390ms;
+}
+
+.cardsGrid > article:nth-child(5) {
+  transition-delay: 460ms;
+}
+
+.cardsGrid > article:nth-child(6) {
+  transition-delay: 530ms;
+}
+
+.cardsGrid > article:nth-child(7) {
+  transition-delay: 600ms;
+}
+
+.cardsGrid > article:nth-child(8) {
+  transition-delay: 670ms;
+}
+
+.cardsGrid > article:nth-child(9) {
+  transition-delay: 740ms;
+}
+
+.cardsGrid > article:nth-child(10) {
+  transition-delay: 810ms;
+}
+
+.cardsGrid > article:nth-child(11) {
+  transition-delay: 880ms;
+}
+
+.cardsGrid > article:nth-child(12) {
+  transition-delay: 950ms;
+}
+
+.visibleCta {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 420ms;
+}

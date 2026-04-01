@@ -5,6 +5,7 @@ interface RaceRoomHeaderProps {
   didCopyLink: boolean;
   isHost: boolean;
   roomStatus: RoomStatus | undefined;
+  showStartButton?: boolean;
   onCopyInviteLink: () => void;
   onStartRace: () => void;
   onLeaveRoom: () => void;
@@ -15,6 +16,7 @@ export function RaceRoomHeader({
   didCopyLink,
   isHost,
   roomStatus,
+  showStartButton = true,
   onCopyInviteLink,
   onStartRace,
   onLeaveRoom,
@@ -35,7 +37,7 @@ export function RaceRoomHeader({
           {didCopyLink ? "Copied" : "Copy Invite Link"}
         </button>
 
-        {isHost && roomStatus === "waiting" ? (
+        {showStartButton && isHost && roomStatus === "waiting" ? (
           <button
             type="button"
             onClick={onStartRace}

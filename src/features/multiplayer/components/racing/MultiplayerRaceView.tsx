@@ -11,6 +11,7 @@ import { RaceRoomHeader } from "./RaceRoomHeader";
 import { RaceTrackView } from "./RaceTrackView";
 import { RaceTypingPanel } from "./RaceTypingPanel";
 import { RoomVoicePanel } from "./RoomVoicePanel";
+import { RoomLobbyView } from "../room/RoomLobbyView";
 
 import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
 import { getRoomApi, joinRoomApi } from "../../services/multiplayerRoomService";
@@ -42,6 +43,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     joinRoom,
     syncRoom,
     startRace,
+    returnToLobby,
     hydrateRoom,
     sendProgress,
     sendChatMessage,
@@ -290,7 +292,9 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   const me = participants.find((participant) => participant.userId === user?.id);
   const isHost = Boolean(me?.isHost);
+  const canStartRace = participants.length >= 2;
   const isRaceFinished = room?.status === "finished";
+  const isWaitingInLobby = room?.status === "waiting";
 
   if (!isAuthenticated) {
     return (
@@ -319,9 +323,66 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           didCopyLink={didCopyLink}
           roomStatus={room?.status}
           onStartNextRace={startRace}
+          onReturnToLobby={returnToLobby}
           onCopyInviteLink={handleCopyInviteLink}
           onLeaveRoom={handleLeaveRoom}
         />
+      </section>
+    );
+  }
+
+  if (isWaitingInLobby) {
+    return (
+      <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
+        <RaceRoomHeader
+          roomId={roomId}
+          didCopyLink={didCopyLink}
+          isHost={isHost}
+          roomStatus={room?.status}
+          showStartButton={false}
+          onCopyInviteLink={handleCopyInviteLink}
+          onStartRace={startRace}
+          onLeaveRoom={handleLeaveRoom}
+        />
+
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_24rem]">
+          <RoomLobbyView
+            participants={participants}
+            isHost={isHost}
+            canStartRace={canStartRace}
+            onStartRace={startRace}
+          />
+
+          <div className="grid gap-4 md:min-h-136 md:grid-rows-[auto_minmax(0,1fr)]">
+            <RoomVoicePanel roomId={roomId} token={token} />
+            <RoomChatPanel
+              messages={room?.chatMessages ?? []}
+              currentUserId={user?.id ?? null}
+              currentUserName={user?.name ?? null}
+              typingUserNames={typingUserNames}
+              isConnected={isConnected}
+              onSendMessage={(text) => sendChatMessage(roomId, text)}
+              onTypingChange={(isTyping) => sendTypingStatus(roomId, isTyping)}
+              className="h-full"
+            />
+          </div>
+        </div>
+
+        {!isConnected ? (
+          <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+            Reconnecting to race server...
+          </p>
+        ) : null}
+
+        {errorMessage ? (
+          <button
+            type="button"
+            onClick={clearError}
+            className="rounded-lg border border-rose-200/30 bg-rose-500/10 px-3 py-2 text-left text-xs text-rose-100"
+          >
+            {errorMessage} (click to dismiss)
+          </button>
+        ) : null}
       </section>
     );
   }
