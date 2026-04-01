@@ -62,3 +62,9 @@ export interface JoinRoomResponse {
 export interface GetRoomResponse {
   room: MultiplayerRoom;
 }
+
+export interface RoomVoiceTokenResponse {
+  token: string;
+  url: string;
+  roomId: string;
+}

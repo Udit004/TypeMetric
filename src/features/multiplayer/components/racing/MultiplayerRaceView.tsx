@@ -10,6 +10,7 @@ import { RoomChatPanel } from "./RoomChatPanel";
 import { RaceRoomHeader } from "./RaceRoomHeader";
 import { RaceTrackView } from "./RaceTrackView";
 import { RaceTypingPanel } from "./RaceTypingPanel";
+import { RoomVoicePanel } from "./RoomVoicePanel";
 
 import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
 import { getRoomApi, joinRoomApi } from "../../services/multiplayerRoomService";
@@ -34,6 +35,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     remainingSeconds,
     results,
     winnerUserId,
+    typingUserNames,
     errorMessage,
     roomClosed,
     clearError,
@@ -43,6 +45,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     hydrateRoom,
     sendProgress,
     sendChatMessage,
+    sendTypingStatus,
     leaveRoom,
   } = useMultiplayerRoom(token);
 
@@ -361,12 +364,16 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           </div>
         </div>
 
-        <div className="md:col-start-2 md:row-span-2 md:min-h-136">
+        <div className="grid gap-4 md:col-start-2 md:row-span-2 md:min-h-136 md:grid-rows-[auto_minmax(0,1fr)]">
+          <RoomVoicePanel roomId={roomId} token={token} />
           <RoomChatPanel
             messages={room?.chatMessages ?? []}
             currentUserId={user?.id ?? null}
+            currentUserName={user?.name ?? null}
+            typingUserNames={typingUserNames}
             isConnected={isConnected}
             onSendMessage={(text) => sendChatMessage(roomId, text)}
+            onTypingChange={(isTyping) => sendTypingStatus(roomId, isTyping)}
             className="h-full"
           />
         </div>

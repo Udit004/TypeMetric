@@ -19,8 +19,10 @@ interface UseMultiplayerRoomState {
   remainingSeconds: number | null;
   results: RaceResult[];
   winnerUserId: string | null;
+  typingUserNames: string[];
   errorMessage: string | null;
   roomClosed: boolean;
+  hostChangeNotification: { newHostName: string; timestamp: number } | null;
 }
 
 interface UseMultiplayerRoomActions {
@@ -31,6 +33,7 @@ interface UseMultiplayerRoomActions {
   hydrateRoom: (nextRoom: MultiplayerRoom) => void;
   sendProgress: (roomId: string, payload: ProgressPayload) => void;
   sendChatMessage: (roomId: string, text: string) => void;
+  sendTypingStatus: (roomId: string, isTyping: boolean) => void;
   clearError: () => void;
 }
 
@@ -74,8 +77,13 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [results, setResults] = useState<RaceResult[]>([]);
   const [winnerUserId, setWinnerUserId] = useState<string | null>(null);
+  const [typingUserNames, setTypingUserNames] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [roomClosed, setRoomClosed] = useState(false);
+  const [hostChangeNotification, setHostChangeNotification] = useState<{
+    newHostName: string;
+    timestamp: number;
+  } | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -141,6 +149,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
           setRoomClosed(false);
           setResults([]);
           setWinnerUserId(null);
+          setTypingUserNames([]);
           setCountdownSeconds(null);
           setRemainingSeconds(null);
         }
@@ -233,6 +242,55 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
             chatMessages: nextMessages,
           };
         });
+        return;
+      }
+
+      if (message.type === "chat:typing") {
+        const payload = message.payload as {
+          roomId?: string;
+          userName?: string;
+          isTyping?: boolean;
+        } | undefined;
+
+        if (!payload?.roomId || !payload.userName || typeof payload.isTyping !== "boolean") {
+          return;
+        }
+
+        const typingUserName = payload.userName;
+
+        setTypingUserNames((previous) => {
+          const next = new Set(previous);
+
+          if (payload.isTyping) {
+            next.add(typingUserName);
+          } else {
+            next.delete(typingUserName);
+          }
+
+          return Array.from(next);
+        });
+        return;
+      }
+
+      if (message.type === "room:host-changed") {
+        const payload = message.payload as {
+          newHostName?: string;
+        } | undefined;
+
+        if (!payload?.newHostName) {
+          return;
+        }
+
+        setHostChangeNotification({
+          newHostName: payload.newHostName,
+          timestamp: Date.now(),
+        });
+
+        // Auto-clear notification after 3 seconds
+        setTimeout(() => {
+          setHostChangeNotification(null);
+        }, 3000);
+        return;
       }
     };
 
@@ -304,6 +362,16 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     [send]
   );
 
+  const sendTypingStatus = useCallback(
+    (roomId: string, isTyping: boolean) => {
+      send("chat:typing", {
+        roomId,
+        isTyping,
+      });
+    },
+    [send]
+  );
+
   const clearError = useCallback(() => {
     setErrorMessage(null);
   }, []);
@@ -315,8 +383,10 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     remainingSeconds,
     results,
     winnerUserId,
+    typingUserNames,
     errorMessage,
     roomClosed,
+    hostChangeNotification,
     joinRoom,
     startRace,
     syncRoom,
@@ -324,6 +394,7 @@ export function useMultiplayerRoom(token: string | null): UseMultiplayerRoomRetu
     hydrateRoom,
     sendProgress,
     sendChatMessage,
+    sendTypingStatus,
     clearError,
   };
 }

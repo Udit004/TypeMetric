@@ -4,6 +4,7 @@ import {
   CreateRoomResponse,
   GetRoomResponse,
   JoinRoomResponse,
+  RoomVoiceTokenResponse,
 } from "../types/multiplayerTypes";
 
 export interface CreateRoomPayload {
@@ -67,5 +68,23 @@ export async function getRoomApi(roomId: string, token: string): Promise<GetRoom
     return response.data;
   } catch (error) {
     throw toApiError(error, "Failed to fetch room");
+  }
+}
+
+export async function getRoomVoiceTokenApi(
+  roomId: string,
+  token: string
+): Promise<RoomVoiceTokenResponse> {
+  try {
+    const response = await api.get<RoomVoiceTokenResponse>(
+      `/multiplayer/rooms/${roomId}/voice-token`,
+      {
+        headers: authHeader(token),
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw toApiError(error, "Failed to get voice token");
   }
 }
