@@ -17,7 +17,6 @@ import { ProfileDashboard, ProfileIdentity, SearchUserResult } from "../types";
 import { FriendCircleSection } from "../components/FriendCircleSection";
 import { PlayerSearchSection } from "../components/PlayerSearchSection";
 import { ProfileIdentitySection } from "../components/ProfileIdentitySection";
-import { ProfileStatsGrid } from "../components/ProfileStatsGrid";
 import { RecentRacesSection } from "../components/RecentRacesSection";
 import { RecentTypingSessionsSection } from "../components/RecentTypingSessionsSection";
 
@@ -163,15 +162,16 @@ export function ProfilePageClient() {
             </div>
           ) : null}
 
-          <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <section>
             <ProfileIdentitySection
               profileIdentity={profile.profile}
               formState={formState}
+              typingStats={profile.typingStats}
+              racingStats={profile.racingStats}
               setFormState={setFormState}
               onSave={handleSave}
               isSaving={isSaving}
             />
-            <ProfileStatsGrid profile={profile} />
           </section>
 
           <section className="grid gap-6 xl:grid-cols-2">
