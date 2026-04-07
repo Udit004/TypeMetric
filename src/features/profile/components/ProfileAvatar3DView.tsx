@@ -100,12 +100,63 @@ interface ProfileAvatar3DViewProps {
   };
 }
 
+interface StatHudCardProps {
+  label: string;
+  value: string;
+  accentClass: string;
+}
+
+function StatHudCard({ label, value, accentClass }: StatHudCardProps) {
+  return (
+    <div className="rounded-xl border border-white/12 bg-slate-950/56 px-3 py-2.5 backdrop-blur">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{label}</p>
+      <p className={`mt-1 text-2xl font-black ${accentClass}`}>{value}</p>
+    </div>
+  );
+}
+
 export function ProfileAvatar3DView({ profileIdentity, stats }: ProfileAvatar3DViewProps) {
   const modelPath = useMemo(() => chooseModelPath(profileIdentity.id), [profileIdentity.id]);
 
+  const leftStats = [
+    {
+      label: "Solo Sessions",
+      value: String(stats.soloSessions),
+      accentClass: "text-white",
+    },
+    {
+      label: "Best Solo WPM",
+      value: metric(stats.bestSoloWpm),
+      accentClass: "text-cyan-200",
+    },
+    {
+      label: "Avg Solo Accuracy",
+      value: `${metric(stats.avgSoloAccuracy)}%`,
+      accentClass: "text-emerald-200",
+    },
+  ];
+
+  const rightStats = [
+    {
+      label: "Race Count",
+      value: String(stats.raceCount),
+      accentClass: "text-white",
+    },
+    {
+      label: "Best Race WPM",
+      value: metric(stats.bestRaceWpm),
+      accentClass: "text-cyan-200",
+    },
+    {
+      label: "Wins / Podiums",
+      value: `${stats.wins} / ${stats.podiums}`,
+      accentClass: "text-amber-200",
+    },
+  ];
+
   return (
     <div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.22),rgba(2,6,23,0.86)_55%)]">
-      <div className="relative h-72 w-full sm:h-80 lg:h-96">
+      <div className="relative h-136 w-full sm:h-144 lg:h-152">
         <Canvas shadows camera={{ position: [0, 1, 3.15], fov: 50 }} dpr={[1, 1.8]}>
           <CameraFocus targetY={CAMERA_FOCUS_Y} />
           <ambientLight intensity={0.65} />
@@ -119,27 +170,45 @@ export function ProfileAvatar3DView({ profileIdentity, stats }: ProfileAvatar3DV
           </Suspense>
         </Canvas>
 
-        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-2xl border border-white/12 bg-slate-950/68 p-3 backdrop-blur">
-          <div className="grid grid-cols-2 gap-2 text-[10px] uppercase tracking-[0.14em] text-slate-300">
-            <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
-              <p className="text-slate-400">Mode</p>
-              <p className="mt-1 text-cyan-100">{profileIdentity.favoriteMode}</p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
-              <p className="text-slate-400">Country</p>
-              <p className="mt-1 truncate text-cyan-100">{profileIdentity.country || "N/A"}</p>
+        <div className="pointer-events-none absolute inset-3 hidden items-center justify-between gap-4 lg:flex">
+          <div className="w-full max-w-52 space-y-3">
+            {leftStats.map((stat) => (
+              <StatHudCard
+                key={stat.label}
+                label={stat.label}
+                value={stat.value}
+                accentClass={stat.accentClass}
+              />
+            ))}
+          </div>
+          <div className="w-full max-w-52 space-y-3">
+            {rightStats.map((stat) => (
+              <StatHudCard
+                key={stat.label}
+                label={stat.label}
+                value={stat.value}
+                accentClass={stat.accentClass}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 lg:hidden">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/12 bg-slate-950/68 p-3 backdrop-blur">
+            {[...leftStats, ...rightStats].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">{stat.label}</p>
+                <p className={`mt-1 text-lg font-black ${stat.accentClass}`}>{stat.value}</p>
+              </div>
+            ))}
+            <div className="col-span-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Mode / Country</p>
+              <p className="mt-1 text-sm font-semibold text-cyan-100">
+                {profileIdentity.favoriteMode} / {profileIdentity.country || "N/A"}
+              </p>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="grid gap-3 border-t border-white/10 p-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Solo Sessions</p><p className="mt-2 text-2xl font-black text-white">{stats.soloSessions}</p></div>
-        <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Best Solo WPM</p><p className="mt-2 text-2xl font-black text-cyan-200">{metric(stats.bestSoloWpm)}</p></div>
-        <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Avg Solo Accuracy</p><p className="mt-2 text-2xl font-black text-emerald-200">{metric(stats.avgSoloAccuracy)}%</p></div>
-        <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Race Count</p><p className="mt-2 text-2xl font-black text-white">{stats.raceCount}</p></div>
-        <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Best Race WPM</p><p className="mt-2 text-2xl font-black text-cyan-200">{metric(stats.bestRaceWpm)}</p></div>
-        <div className="rounded-xl border border-white/10 bg-slate-950/55 p-3"><p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Wins / Podiums</p><p className="mt-2 text-2xl font-black text-amber-200">{stats.wins} / {stats.podiums}</p></div>
       </div>
     </div>
   );
