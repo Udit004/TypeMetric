@@ -15,6 +15,7 @@ import { saveTypingSessionApi } from "../services/typingSessionService";
 import type { CompletionReason, SaveTypingSessionPayload } from "../types/typingSession";
 import { TextRenderer } from "./TextRenderer";
 import { TypingStats } from "./TypingStats";
+import { RunnerGame } from "./RunnerGame";
 import { useAuth } from "@/share/hooks/useAuth";
 
 interface TypingInputProps {
@@ -153,6 +154,12 @@ export function TypingInput({
     resetTimer();
   };
 
+  // Calculate current WPM
+  const currentWpm = useMemo(
+    () => calculateWPM(typedCharacters.length, elapsedMs),
+    [elapsedMs, typedCharacters.length]
+  );
+
   return (
     <section
       aria-label="Typing engine"
@@ -176,6 +183,9 @@ export function TypingInput({
         mistakes={mistakes}
         elapsedMs={elapsedMs}
       />
+
+      {/* Phaser Runner Game Component - Shows visual representation of typing speed */}
+      <RunnerGame wpm={currentWpm} isActive={!isSessionCompleted} />
     </section>
   );
 }

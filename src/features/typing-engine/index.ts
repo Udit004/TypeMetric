@@ -3,6 +3,7 @@ export { Cursor } from "./components/Cursor";
 export { TextRenderer } from "./components/TextRenderer";
 export { TypingInput } from "./components/TypingInput";
 export { TypingStats } from "./components/TypingStats";
+export { RunnerGame } from "./components/RunnerGame";
 
 export { useTimer } from "./hooks/useTimer";
 export { useTypingEngine } from "./hooks/useTypingEngine";
