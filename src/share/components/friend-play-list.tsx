@@ -65,7 +65,7 @@ export function FriendPlayList({
                   }}
                   title={actionLabel}
                   aria-label={actionLabel}
-                  className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-400 text-slate-950 transition hover:bg-cyan-300"
+                  className="grid h-9 w-9 cursor-pointer place-items-center rounded-xl bg-cyan-400 text-slate-950 transition hover:bg-cyan-300"
                 >
                   <svg
                     aria-hidden="true"
@@ -88,7 +88,7 @@ export function FriendPlayList({
                 <button
                   type="button"
                   onClick={() => onRemove(friend.id)}
-                  className="rounded-xl border border-rose-300/20 bg-rose-400/10 px-2.5 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/20"
+                  className="cursor-pointer rounded-xl border border-rose-300/20 bg-rose-400/10 px-2.5 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/20"
                 >
                   Remove
                 </button>
