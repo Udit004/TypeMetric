@@ -13,8 +13,6 @@ export const TYPING_TEXT_BLOCKS: string[] = [
   "Lasting typing growth happens when practice quality stays high from the first second to the final line, even as fatigue builds late in the run. Maintain a stable base by keeping your hands relaxed and your movements economical. Watch for words ahead of the cursor so your transitions remain fluid and your timing does not collapse under pressure. Accept occasional errors, correct them quickly, and protect overall rhythm rather than chasing perfection on each keystroke. Measure your sessions honestly, noting where pace dropped and where your focus remained consistent. Use that information to guide the next attempt with one clear improvement target. Repeated over weeks, this process builds dependable speed, cleaner accuracy, and strong composure in both testing and practical typing work.",
 ];
 
-export const DEFAULT_TEXT = TYPING_TEXT_BLOCKS[0];
-
 export function getRandomTypingText(previousText?: string): string {
   if (TYPING_TEXT_BLOCKS.length === 0) {
     return "";
@@ -34,5 +32,7 @@ export function getRandomTypingText(previousText?: string): string {
 
   return source[randomIndex];
 }
+
+export const DEFAULT_TEXT = getRandomTypingText();
 
 export const TEST_DURATION = 60;

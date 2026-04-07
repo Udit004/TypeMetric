@@ -198,41 +198,51 @@ export function TextRenderer({
     <div
       ref={containerRef}
       aria-label="Typing text"
-      className="relative rounded-2xl  bg-slate-900/75 p-5 font-mono text-lg leading-8 shadow-xl shadow-slate-950/45 sm:text-xl"
+      className="relative rounded-2xl bg-slate-900/75 p-5 font-mono text-center text-lg leading-8 shadow-xl shadow-slate-950/45 sm:text-xl"
     >
-      {visibleLineRanges.map((lineRange, lineIndex) => (
-        <div
-          key={`${lineRange.start}-${lineRange.end}`}
-          className={lineIndex < visibleLineRanges.length - 1 ? "min-h-8 whitespace-pre overflow-hidden" : "whitespace-pre overflow-hidden"}
-        >
-          {parsedText.slice(lineRange.start, lineRange.end).map((char, localIndex) => {
-            const index = lineRange.start + localIndex;
-            const status = getCharacterStatus(index, char, typedCharacters, currentIndex);
-
-            return (
-              <span key={`${index}-${char}`}>
-                {index === currentIndex ? <Cursor /> : null}
-                <Character char={char} status={status} />
-              </span>
-            );
-          })}
+      {isFinished ? (
+        <div className="flex min-h-40 items-center justify-center">
+          {onRestart ? (
+            <button
+              type="button"
+              onClick={onRestart}
+              className="rounded-xl border border-cyan-300/45 bg-cyan-500/10 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-500/20 cursor-pointer"
+            >
+              Restart Test
+            </button>
+          ) : (
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-300">
+              Test Complete
+            </p>
+          )}
         </div>
-      ))}
-      {currentIndex >= parsedText.length && currentIndex >= visibleStart && currentIndex <= visibleEnd ? (
-        <Cursor />
-      ) : null}
+      ) : (
+        <>
+          {visibleLineRanges.map((lineRange, lineIndex) => (
+            <div
+              key={`${lineRange.start}-${lineRange.end}`}
+              className={lineIndex < visibleLineRanges.length - 1 ? "min-h-8 whitespace-pre overflow-hidden" : "whitespace-pre overflow-hidden"}
+            >
+              {parsedText.slice(lineRange.start, lineRange.end).map((char, localIndex) => {
+                const index = lineRange.start + localIndex;
+                const status = getCharacterStatus(index, char, typedCharacters, currentIndex);
 
-      {isFinished && onRestart ? (
-        <div className="mt-4 flex items-center justify-end">
-          <button
-            type="button"
-            onClick={onRestart}
-            className="rounded-lg border border-cyan-300/45 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-500/20 cursor-pointer"
-          >
-            Restart Test
-          </button>
-        </div>
-      ) : null}
+                return (
+                  <span key={`${index}-${char}`}>
+                    {index === currentIndex ? <Cursor /> : null}
+                    <Character char={char} status={status} />
+                  </span>
+                );
+              })}
+            </div>
+          ))}
+          {currentIndex >= parsedText.length &&
+          currentIndex >= visibleStart &&
+          currentIndex <= visibleEnd ? (
+            <Cursor />
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
