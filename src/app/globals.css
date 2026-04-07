@@ -59,3 +59,11 @@ body::after {
       linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
   }
 }
+
+.runner-game-shell {
+  min-height: 350px;
+}
+
+.runner-game-shell--fullscreen {
+  min-height: calc(100vh - 19rem);
+}

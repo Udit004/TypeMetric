@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_TEXT,
   TEST_DURATION,
@@ -27,8 +27,10 @@ export function TypingInput({
   text,
   durationSeconds = TEST_DURATION,
 }: TypingInputProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, token } = useAuth();
   const hasCustomText = typeof text === "string" && text.trim().length > 0;
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeText, setActiveText] = useState(() =>
     hasCustomText ? text : DEFAULT_TEXT
   );
@@ -55,6 +57,37 @@ export function TypingInput({
 
   const isTextCompleted = currentIndex >= parsedText.length;
   const isSessionCompleted = isFinished || isTextCompleted;
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = async () => {
+    const panel = panelRef.current;
+
+    if (!panel) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await panel.requestFullscreen();
+    } catch (error) {
+      console.error("Failed to toggle fullscreen", error);
+    }
+  };
 
   useEffect(() => {
     const onWindowKeyDown = (event: KeyboardEvent) => {
@@ -162,30 +195,52 @@ export function TypingInput({
 
   return (
     <section
+      ref={panelRef}
       aria-label="Typing engine"
-      className="space-y-6 rounded-[1.4rem]  bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:p-6"
+      className={`relative flex flex-col gap-6 rounded-[1.4rem] bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:p-6 ${
+        isFullscreen
+          ? "fixed inset-0 z-50 h-screen items-center justify-center overflow-hidden rounded-none p-4 sm:p-6 lg:p-8"
+          : ""
+      }`}
     >
-      <TextRenderer
-        text={resolvedText}
-        typedCharacters={typedCharacters}
-        currentIndex={currentIndex}
-        isFinished={isFinished}
-        onRestart={handleReset}
-      />
+      <button
+        type="button"
+        onClick={handleToggleFullscreen}
+        className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-slate-950/80 px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-slate-900"
+      >
+        {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+      </button>
 
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
+      <div className={isFullscreen ? "mx-auto w-full max-w-6xl pt-10" : ""}>
+        <TextRenderer
+          text={resolvedText}
+          typedCharacters={typedCharacters}
+          currentIndex={currentIndex}
+          isFinished={isFinished}
+          onRestart={handleReset}
+        />
+      </div>
+
+      <p className={`text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 ${isFullscreen ? "text-center" : ""}`}>
         Press any key to start typing
       </p>
 
-      <TypingStats
-        text={resolvedText}
-        typedCharacters={typedCharacters}
-        mistakes={mistakes}
-        elapsedMs={elapsedMs}
-      />
+      <div className={isFullscreen ? "mx-auto w-full max-w-6xl" : ""}>
+        <TypingStats
+          text={resolvedText}
+          typedCharacters={typedCharacters}
+          mistakes={mistakes}
+          elapsedMs={elapsedMs}
+        />
+      </div>
 
       {/* Phaser Runner Game Component - Shows visual representation of typing speed */}
-      <RunnerGame wpm={currentWpm} isActive={!isSessionCompleted} />
+      <RunnerGame
+        wpm={currentWpm}
+        isActive={!isSessionCompleted}
+        hasStartedTyping={typedCharacters.length > 0}
+        isFullscreen={isFullscreen}
+      />
     </section>
   );
 }

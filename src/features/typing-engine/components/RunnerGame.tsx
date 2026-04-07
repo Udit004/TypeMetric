@@ -7,13 +7,22 @@ import Phaser from "phaser";
 interface RunnerGameProps {
   wpm?: number;
   isActive?: boolean;
+  hasStartedTyping?: boolean;
+  isFullscreen?: boolean;
 }
 
-export function RunnerGame({ wpm = 0, isActive = true }: RunnerGameProps) {
+export function RunnerGame({
+  wpm = 0,
+  isActive = true,
+  hasStartedTyping = false,
+  isFullscreen = false,
+}: RunnerGameProps) {
+  const musicRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const speedRef = useRef(2);
   const isActiveRef = useRef(isActive);
+  const hasStartedTypingRef = useRef(false);
 
   useEffect(() => {
     speedRef.current = 2 + (wpm / 30);
@@ -35,6 +44,24 @@ export function RunnerGame({ wpm = 0, isActive = true }: RunnerGameProps) {
   }, [isActive]);
 
   useEffect(() => {
+    if (!hasStartedTyping || hasStartedTypingRef.current) {
+      return;
+    }
+
+    hasStartedTypingRef.current = true;
+
+    if (!musicRef.current) {
+      musicRef.current = new Audio("/sounds/raceBackgroundSound.mp3");
+      musicRef.current.loop = true;
+      musicRef.current.volume = 0.35;
+    }
+
+    void musicRef.current.play().catch((error) => {
+      console.error("Failed to play runner music", error);
+    });
+  }, [hasStartedTyping]);
+
+  useEffect(() => {
     if (!containerRef.current || gameRef.current) {
       return;
     }
@@ -49,6 +76,10 @@ export function RunnerGame({ wpm = 0, isActive = true }: RunnerGameProps) {
       width: 1000,
       height: 350,
       parent: containerRef.current,
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+      },
       physics: {
         default: "arcade",
         arcade: {
@@ -154,6 +185,12 @@ export function RunnerGame({ wpm = 0, isActive = true }: RunnerGameProps) {
 
     // Cleanup function
     return () => {
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current.currentTime = 0;
+        musicRef.current = null;
+      }
+
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
@@ -165,7 +202,8 @@ export function RunnerGame({ wpm = 0, isActive = true }: RunnerGameProps) {
     <div
       ref={containerRef}
       id="runner-game"
-      className="mt-4 flex justify-center overflow-hidden rounded-lg"
+      className="mt-4 flex w-full flex-1 justify-center overflow-hidden rounded-lg"
+      style={{ minHeight: isFullscreen ? "calc(100vh - 19rem)" : "350px" }}
       aria-label="Phaser Runner Game - Visual Typing Speed Indicator"
     />
   );
