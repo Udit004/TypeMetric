@@ -9,6 +9,7 @@ interface RunnerGameProps {
   isActive?: boolean;
   hasStartedTyping?: boolean;
   isFullscreen?: boolean;
+  asBackground?: boolean;
 }
 
 export function RunnerGame({
@@ -16,7 +17,18 @@ export function RunnerGame({
   isActive = true,
   hasStartedTyping = false,
   isFullscreen = false,
+  asBackground = false,
 }: RunnerGameProps) {
+  const backgroundWidth = isFullscreen ? 2200 : 1600;
+  const backgroundHeight = isFullscreen ? 760 : 560;
+  const sceneWidth = asBackground ? backgroundWidth : 1000;
+  const sceneHeight = asBackground ? backgroundHeight : 250;
+  const roadHeight = asBackground ? (isFullscreen ? 104 : 98) : 90;
+  const roadY = sceneHeight - roadHeight;
+  const runnerBaselineY = sceneHeight - (asBackground ? 12 : 14);
+  const runnerStartX = asBackground ? Math.round(sceneWidth * 0.5) : 150;
+  const runnerScale = asBackground ? (isFullscreen ? 0.6 : 0.52) : 0.42;
+
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -66,18 +78,18 @@ export function RunnerGame({
       return;
     }
 
-    let background: Phaser.GameObjects.TileSprite;
+    let backgroundA: Phaser.GameObjects.Image;
+    let backgroundB: Phaser.GameObjects.Image;
     let ground: Phaser.GameObjects.TileSprite;
     let player: Phaser.Physics.Arcade.Sprite;
-    let isJumping = false;
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 1000,
-      height: 350,
+      width: sceneWidth,
+      height: sceneHeight,
       parent: containerRef.current,
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode: asBackground ? Phaser.Scale.ENVELOP : Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       physics: {
@@ -100,18 +112,20 @@ export function RunnerGame({
           });
         },
         create() {
-          // Create background (sky, clouds, AND cityscape/mountains)
-          // Height: 260px (0 to 260) - scaled to show full cityscape/mountains
-          background = this.add
-            .tileSprite(0, 0, 1000, 400, "bg")
+          backgroundA = this.add
+            .image(0, 0, "bg")
             .setOrigin(0)
             .setDepth(0)
-            .setScale(1); // Ensure no scaling issues
+            .setDisplaySize(sceneWidth, sceneHeight);
 
-          // Create road/ground (showing BOTH road lanes - road.png contains 2 lane sections)
-          // Position: y=260 (start of road), height=90px (extends to y=350)
+          backgroundB = this.add
+            .image(sceneWidth, 0, "bg")
+            .setOrigin(0)
+            .setDepth(0)
+            .setDisplaySize(sceneWidth, sceneHeight);
+
           ground = this.add
-            .tileSprite(0, 310, 1000, 90, "road")
+            .tileSprite(0, roadY, sceneWidth, roadHeight, "road")
             .setOrigin(0)
             .setDepth(1);
 
@@ -127,34 +141,35 @@ export function RunnerGame({
           });
 
           // Create player sprite and anchor feet to the road baseline.
-          player = this.physics.add.sprite(150, 338, "runner") as Phaser.Physics.Arcade.Sprite;
+          player = this.physics.add.sprite(runnerStartX, runnerBaselineY, "runner") as Phaser.Physics.Arcade.Sprite;
           player.play("running");
           player.setBounce(0);
           player.setOrigin(0.5, 1);
-          player.setScale(0.42);
+          player.setScale(runnerScale);
           player.setDepth(2);
           player.setCollideWorldBounds(true);
 
           // Add ground physics
           // Use an invisible static rectangle so only the scrolling road is visible.
-          const groundPhysics = this.add.rectangle(500, 342, 1000, 16, 0x000000, 0);
+          const groundPhysics = this.add.rectangle(
+            sceneWidth / 2,
+            sceneHeight - 8,
+            sceneWidth,
+            16,
+            0x000000,
+            0
+          );
           this.physics.add.existing(groundPhysics, true);
 
           // Enable collision with ground
-          this.physics.add.collider(player, groundPhysics, () => {
-            isJumping = false;
-          });
+          this.physics.add.collider(player, groundPhysics);
 
-          // Handle jump input
-          this.input.keyboard?.on("keydown-SPACE", () => {
-            if (!isJumping && player) {
-              player.setVelocityY(-350);
-              isJumping = true;
-            }
-          });
+          // Keep the game purely visual inside the typing panel.
+          // We do not attach mouse/keyboard handlers from Phaser.
+          this.input.enabled = false;
         },
         update: () => {
-          if (!background || !ground || !player) return;
+          if (!backgroundA || !backgroundB || !ground || !player) return;
 
           if (!isActiveRef.current) {
             return;
@@ -163,18 +178,26 @@ export function RunnerGame({
           // Update speed based on WPM (formula: speed = 2 + (wpm / 30))
           const currentSpeed = speedRef.current;
 
-          // Move background (slower parallax effect)
-          background.tilePositionX += currentSpeed * 0.2;
+          // Move sky/mountains with horizontal looping only.
+          const backgroundSpeed = currentSpeed * 0.2;
+          backgroundA.x -= backgroundSpeed;
+          backgroundB.x -= backgroundSpeed;
+
+          if (backgroundA.x + sceneWidth <= 0) {
+            backgroundA.x = backgroundB.x + sceneWidth;
+          }
+
+          if (backgroundB.x + sceneWidth <= 0) {
+            backgroundB.x = backgroundA.x + sceneWidth;
+          }
 
           // Move ground (full speed)
           ground.tilePositionX += currentSpeed;
 
-          // Clamp player position - keep on or above road (y >= 305)
-          // Keep feet on road baseline.
-          if (player.y > 338) {
-            player.setY(338);
+          // Keep the runner locked to the ground baseline.
+          if (player.y > runnerBaselineY) {
+            player.setY(runnerBaselineY);
             player.setVelocityY(0);
-            isJumping = false;
           }
         },
       },
@@ -196,14 +219,19 @@ export function RunnerGame({
         gameRef.current = null;
       }
     };
-  }, []);
+  }, [asBackground, isFullscreen, roadHeight, roadY, runnerBaselineY, runnerScale, runnerStartX, sceneHeight, sceneWidth]);
 
   return (
     <div
       ref={containerRef}
       id="runner-game"
-      className="mt-4 flex w-full flex-1 justify-center overflow-hidden rounded-lg"
-      style={{ minHeight: isFullscreen ? "calc(100vh - 19rem)" : "350px" }}
+      className={
+        asBackground
+          ? "pointer-events-none absolute inset-0 z-0 overflow-hidden"
+          : `mt-4 flex w-full flex-1 justify-center overflow-hidden rounded-lg ${
+              isFullscreen ? "min-h-[calc(100vh-19rem)]" : "min-h-87.5"
+            }`
+      }
       aria-label="Phaser Runner Game - Visual Typing Speed Indicator"
     />
   );

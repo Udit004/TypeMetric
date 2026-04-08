@@ -197,21 +197,31 @@ export function TypingInput({
     <section
       ref={panelRef}
       aria-label="Typing engine"
-      className={`relative flex flex-col gap-6 rounded-[1.4rem] bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:p-6 ${
+      className={`relative flex min-h-136 flex-col gap-6 overflow-hidden rounded-[1.4rem] bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:min-h-144 sm:p-6 ${
         isFullscreen
           ? "fixed inset-0 z-50 h-screen items-center justify-center overflow-hidden rounded-none p-4 sm:p-6 lg:p-8"
           : ""
       }`}
     >
+      <RunnerGame
+        wpm={currentWpm}
+        isActive={!isSessionCompleted}
+        hasStartedTyping={typedCharacters.length > 0}
+        isFullscreen={isFullscreen}
+        asBackground
+      />
+
+      <div className="pointer-events-none absolute inset-0 z-1 bg-slate-950/35" />
+
       <button
         type="button"
         onClick={handleToggleFullscreen}
-        className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-slate-950/80 px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-slate-900"
+        className="absolute right-4 top-4 z-20 rounded-full border border-white/15 bg-slate-950/80 px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-slate-900"
       >
         {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
       </button>
 
-      <div className={isFullscreen ? "mx-auto w-full max-w-6xl pt-10" : ""}>
+      <div className={`relative z-10 ${isFullscreen ? "mx-auto w-full max-w-6xl pt-10" : ""}`}>
         <TextRenderer
           text={resolvedText}
           typedCharacters={typedCharacters}
@@ -221,11 +231,11 @@ export function TypingInput({
         />
       </div>
 
-      <p className={`text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 ${isFullscreen ? "text-center" : ""}`}>
+      <p className={`relative z-10 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 ${isFullscreen ? "text-center" : ""}`}>
         Press any key to start typing
       </p>
 
-      <div className={isFullscreen ? "mx-auto w-full max-w-6xl" : ""}>
+      <div className={`relative z-10 ${isFullscreen ? "mx-auto w-full max-w-6xl" : ""}`}>
         <TypingStats
           text={resolvedText}
           typedCharacters={typedCharacters}
@@ -233,14 +243,6 @@ export function TypingInput({
           elapsedMs={elapsedMs}
         />
       </div>
-
-      {/* Phaser Runner Game Component - Shows visual representation of typing speed */}
-      <RunnerGame
-        wpm={currentWpm}
-        isActive={!isSessionCompleted}
-        hasStartedTyping={typedCharacters.length > 0}
-        isFullscreen={isFullscreen}
-      />
     </section>
   );
 }
