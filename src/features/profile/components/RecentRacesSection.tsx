@@ -11,7 +11,7 @@ export function RecentRacesSection({ races }: RecentRacesSectionProps) {
       <div>
         <h2 className="text-lg font-bold text-white">Recent Multiplayer Races</h2>
       </div>
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 max-h-124 overflow-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-white/8 text-xs uppercase tracking-[0.16em] text-slate-400">
