@@ -10,19 +10,19 @@ interface RaceTrackViewProps {
 }
 
 const TRACK_POSITION_CLASSES = [
-  "left-[4%]",
-  "left-[12%]",
-  "left-[20%]",
-  "left-[28%]",
-  "left-[36%]",
-  "left-[44%]",
-  "left-[52%]",
-  "left-[60%]",
-  "left-[68%]",
-  "left-[76%]",
-  "left-[84%]",
-  "left-[92%]",
-  "left-[96%]",
+  "race-track-pos-0",
+  "race-track-pos-1",
+  "race-track-pos-2",
+  "race-track-pos-3",
+  "race-track-pos-4",
+  "race-track-pos-5",
+  "race-track-pos-6",
+  "race-track-pos-7",
+  "race-track-pos-8",
+  "race-track-pos-9",
+  "race-track-pos-10",
+  "race-track-pos-11",
+  "race-track-pos-12",
 ];
 
 function getTrackPositionClass(position: number): string {
@@ -30,6 +30,28 @@ function getTrackPositionClass(position: number): string {
   const normalized = (clamped - 4) / 92;
   const index = Math.round(normalized * (TRACK_POSITION_CLASSES.length - 1));
   return TRACK_POSITION_CLASSES[index] ?? TRACK_POSITION_CLASSES[0];
+}
+
+function getRunnerSpeedClass(wpm: number, maxObservedWpm: number): string {
+  const ratio = Math.min(1, Math.max(0, wpm / maxObservedWpm));
+
+  if (ratio >= 0.85) {
+    return "race-track-runner--speed-1";
+  }
+
+  if (ratio >= 0.65) {
+    return "race-track-runner--speed-2";
+  }
+
+  if (ratio >= 0.45) {
+    return "race-track-runner--speed-3";
+  }
+
+  if (ratio >= 0.25) {
+    return "race-track-runner--speed-4";
+  }
+
+  return "race-track-runner--speed-5";
 }
 
 export function RaceTrackView({ participants, results, winnerUserId, roomStatus }: RaceTrackViewProps) {
@@ -59,6 +81,7 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
       return {
         ...participant,
         isWinner,
+        runnerSpeedClass: getRunnerSpeedClass(participant.progress.wpm, maxObservedWpm),
         positionClass: getTrackPositionClass(finalPosition),
       };
     });
@@ -71,7 +94,7 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
           Live Track View
         </h3>
         <span className="text-[11px] uppercase tracking-[0.12em] text-slate-400">
-          Top view | speed based
+          Runner view | speed based
         </span>
       </div>
 
@@ -89,15 +112,18 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
               </p>
             </div>
 
-            <div className="relative h-12 overflow-hidden rounded-full border border-slate-700/70 bg-linear-to-r from-slate-900 via-slate-800 to-slate-900">
-              <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 border-t border-dashed border-slate-400/35" />
+            <div className="relative h-16 overflow-hidden rounded-full border border-slate-700/70 bg-linear-to-r from-slate-900 via-slate-800 to-slate-900">
+              <div className="absolute inset-x-2 bottom-0.5 h-2 rounded-full bg-slate-950/65" />
+              <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 border-t border-dashed border-slate-300/30" />
 
               <div
-                className={`absolute top-1/2 h-6 w-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-cyan-200/40 bg-cyan-300/90 shadow-[0_0_16px_rgba(34,211,238,0.35)] transition-all duration-300 ${participant.positionClass}`}
+                className={`absolute bottom-0.5 z-10 transition-all duration-300 ${participant.positionClass}`}
               >
-                <div className="absolute -bottom-1 left-1 h-2 w-2 rounded-full bg-slate-950" />
-                <div className="absolute -bottom-1 right-1 h-2 w-2 rounded-full bg-slate-950" />
-                <div className="absolute left-2 top-1 h-2 w-5 rounded-sm bg-slate-900/60" />
+                <div
+                  className={`race-track-runner ${participant.runnerSpeedClass} ${
+                    participant.isWinner ? "race-track-runner--winner" : ""
+                  }`}
+                />
               </div>
             </div>
           </div>

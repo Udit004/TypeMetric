@@ -67,3 +67,107 @@ body::after {
 .runner-game-shell--fullscreen {
   min-height: calc(100vh - 19rem);
 }
+
+@keyframes race-runner-frames {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: -890px 0;
+  }
+}
+
+.race-track-runner {
+  width: 178px;
+  height: 288px;
+  background-image: url("/assests/singlePlayerImages/runner.png");
+  background-repeat: no-repeat;
+  background-size: 890px 288px;
+  background-position: 0 0;
+  transform: scale(0.2);
+  transform-origin: center bottom;
+  filter: drop-shadow(0 2px 4px rgba(2, 6, 23, 0.55));
+  image-rendering: auto;
+  will-change: background-position;
+  animation-name: race-runner-frames;
+  animation-timing-function: steps(5);
+  animation-iteration-count: infinite;
+  animation-duration: 560ms;
+}
+
+.race-track-pos-0 {
+  left: 4%;
+}
+
+.race-track-pos-1 {
+  left: 12%;
+}
+
+.race-track-pos-2 {
+  left: 20%;
+}
+
+.race-track-pos-3 {
+  left: 28%;
+}
+
+.race-track-pos-4 {
+  left: 36%;
+}
+
+.race-track-pos-5 {
+  left: 44%;
+}
+
+.race-track-pos-6 {
+  left: 52%;
+}
+
+.race-track-pos-7 {
+  left: 60%;
+}
+
+.race-track-pos-8 {
+  left: 68%;
+}
+
+.race-track-pos-9 {
+  left: 76%;
+}
+
+.race-track-pos-10 {
+  left: 84%;
+}
+
+.race-track-pos-11 {
+  left: 92%;
+}
+
+.race-track-pos-12 {
+  left: 96%;
+}
+
+.race-track-runner--speed-1 {
+  animation-duration: 360ms;
+}
+
+.race-track-runner--speed-2 {
+  animation-duration: 430ms;
+}
+
+.race-track-runner--speed-3 {
+  animation-duration: 500ms;
+}
+
+.race-track-runner--speed-4 {
+  animation-duration: 580ms;
+}
+
+.race-track-runner--speed-5 {
+  animation-duration: 660ms;
+}
+
+.race-track-runner--winner {
+  filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.55));
+}
