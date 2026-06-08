@@ -1,4 +1,4 @@
 module.exports = {
-  siteUrl: 'https://your-domain.com',
+  siteUrl: 'https://type-metric.vercel.app',
   generateRobotsTxt: true,
 }
