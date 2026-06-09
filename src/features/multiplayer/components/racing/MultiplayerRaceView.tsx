@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Howl } from "howler";
 import { RaceCompletionPanel } from "../result/RaceCompletionPanel";
+import { RaceCelebrationOverlay } from "./feedback/RaceCelebrationOverlay";
+import { RaceLiveStats } from "./feedback/RaceLiveStats";
+import {
+  countCompletedSentences,
+  countCompletedWords,
+  getCurrentCorrectStreak,
+  getLeadingCorrectCharacters,
+} from "./feedback/raceFeedbackUtils";
+import { useRaceFeedback } from "./feedback/useRaceFeedback";
 import { RaceLeaderboard } from "./RaceLeaderboard";
 import { RoomChatPanel } from "./RoomChatPanel";
 import { RaceRoomHeader } from "./RaceRoomHeader";
@@ -87,12 +96,10 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       return;
     }
 
-    // Play tick for 3, 2, 1 (not for 0)
     if (countdownSeconds > 0) {
       playCountdownTick();
     }
 
-    // Play race start sound on 0 and stop countdown tick
     if (countdownSeconds === 0) {
       stopCountdownTick();
       playRaceStart();
@@ -105,7 +112,6 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       return;
     }
 
-    // Play cheering at specific intervals (every 10 seconds)
     if (remainingSeconds > 0 && remainingSeconds % 10 === 0) {
       playCheering();
     }
@@ -151,8 +157,6 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
     };
   }, []);
 
-  const previousStatusRef = useRef<string | null>(null);
-
   const correctCharacters = useMemo(
     () =>
       typedCharacters.reduce((count, typedChar, index) => {
@@ -160,6 +164,41 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
       }, 0),
     [parsedText, typedCharacters]
   );
+
+  const leadingCorrectCharacters = useMemo(
+    () => getLeadingCorrectCharacters(typedCharacters, parsedText),
+    [parsedText, typedCharacters]
+  );
+
+  const completedWords = useMemo(
+    () => countCompletedWords(activeText, leadingCorrectCharacters),
+    [activeText, leadingCorrectCharacters]
+  );
+
+  const completedSentences = useMemo(
+    () => countCompletedSentences(activeText, leadingCorrectCharacters),
+    [activeText, leadingCorrectCharacters]
+  );
+
+  const currentCorrectStreak = useMemo(
+    () => getCurrentCorrectStreak(typedCharacters, parsedText),
+    [parsedText, typedCharacters]
+  );
+
+  const progressPercent = useMemo(() => {
+    if (!activeText.length) {
+      return 0;
+    }
+
+    return Math.min(100, (leadingCorrectCharacters / activeText.length) * 100);
+  }, [activeText.length, leadingCorrectCharacters]);
+
+  const { isFinishTransitionActive, momentBanner, reactionBursts } = useRaceFeedback({
+    completedSentences,
+    completedWords,
+    onRaceStart: resetTyping,
+    roomStatus: room?.status,
+  });
 
   useEffect(() => {
     if (room?.status !== "racing") {
@@ -233,7 +272,6 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           hydrateRoom(joined.room);
           wasJoinedViaRest = true;
         } catch {
-          // If REST join fails (e.g. already participant), attempt a room snapshot fallback.
           const snapshot = await getRoomApi(roomId, token);
           hydrateRoom(snapshot.room);
         }
@@ -245,7 +283,6 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
         setLoadingMessage("Syncing race state...");
 
         if (!wasJoinedViaRest) {
-          // Ensure backend websocket context is attached to this room.
           joinRoom(roomId);
         }
 
@@ -275,16 +312,6 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
     router.push("/multiplayer");
   }, [roomClosed, router]);
-
-  useEffect(() => {
-    const currentStatus = room?.status ?? null;
-
-    if (previousStatusRef.current !== "racing" && currentStatus === "racing") {
-      resetTyping();
-    }
-
-    previousStatusRef.current = currentStatus;
-  }, [resetTyping, room?.status]);
 
   useEffect(() => {
     const onWindowKeyDown = (event: KeyboardEvent) => {
@@ -352,7 +379,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
   const me = participants.find((participant) => participant.userId === user?.id);
   const isHost = Boolean(me?.isHost);
   const canStartRace = participants.length >= 2;
-  const isRaceFinished = room?.status === "finished";
+  const isRaceFinished = room?.status === "finished" && !isFinishTransitionActive;
   const isWaitingInLobby = room?.status === "waiting";
 
   if (!isAuthenticated) {
@@ -372,7 +399,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   if (isRaceFinished) {
     return (
-      <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
+      <section className="relative space-y-5 rounded-3xl sm:p-6">
         <RaceCompletionPanel
           participants={participants}
           results={results}
@@ -393,7 +420,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   if (isWaitingInLobby) {
     return (
-      <section className="">
+      <section className="min-h-screen">
         <RaceRoomHeader
           roomId={roomId}
           token={token}
@@ -427,29 +454,14 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
             Reconnecting to race server...
           </p>
         ) : null}
-
-        {/* {errorMessage ? (
-          <button
-            type="button"
-            onClick={clearError}
-            className="rounded-lg border border-rose-200/30 bg-rose-500/10 px-3 py-2 text-left text-xs text-rose-100"
-          >
-            {errorMessage} (click to dismiss)
-          </button>
-        ) : null} */}
       </section>
     );
   }
 
   return (
-    <section className="relative h-[850px] overflow-hidden rounded-2xl p-2 sm:h-[900px] sm:p-3 border border-sky-200/20">
-      {/* 3D Canvas Scene as the background */}
-      
-
-      {/* Radial gradients for aesthetic enhancement */}
+    <section className="relative h-[850px] overflow-hidden rounded-2xl border border-sky-200/20 p-2 sm:h-[900px] sm:p-3">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(56,189,248,0.2),transparent_42%),radial-gradient(circle_at_82%_20%,rgba(16,185,129,0.18),transparent_42%),radial-gradient(circle_at_50%_78%,rgba(45,212,191,0.15),transparent_46%)]" />
 
-      {/* Floating Buttons Bar for Chat and Invite Popups */}
       <div className="absolute right-4 top-24 z-20 flex flex-col gap-2.5 pointer-events-auto">
         <button
           type="button"
@@ -460,11 +472,11 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           className={`flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition-all duration-200 cursor-pointer ${
             showChatPopup
               ? "border-cyan-400 bg-cyan-400/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-              : "border-white/10 bg-slate-950/75 text-slate-400 hover:text-white hover:border-white/25"
+              : "border-white/10 bg-slate-950/75 text-slate-400 hover:border-white/25 hover:text-white"
           }`}
           title="Toggle Chat"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 4.75 4.75 0 0 0 3.292-1.412c.389-.387.896-.555 1.432-.555h.341Z" />
           </svg>
         </button>
@@ -478,33 +490,32 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           className={`flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition-all duration-200 cursor-pointer ${
             showInvitePopup
               ? "border-cyan-400 bg-cyan-400/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-              : "border-white/10 bg-slate-950/75 text-slate-400 hover:text-white hover:border-white/25"
+              : "border-white/10 bg-slate-950/75 text-slate-400 hover:border-white/25 hover:text-white"
           }`}
           title="Toggle Invite Friends"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
           </svg>
         </button>
       </div>
 
-      {/* Chat Popup Panel */}
       {showChatPopup && (
-        <div className="absolute right-18 top-24 w-88 bg-slate-950/95 border border-sky-200/20 rounded-2xl shadow-2xl backdrop-blur-md p-4 z-30 pointer-events-auto h-[480px] flex flex-col">
-          <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/10">
+        <div className="absolute right-18 top-24 z-30 flex h-[480px] w-88 flex-col rounded-2xl border border-sky-200/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md pointer-events-auto">
+          <div className="mb-2 flex items-center justify-between border-b border-white/10 pb-2">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
               <h4 className="text-sm font-bold text-cyan-200">Room Chat</h4>
             </div>
             <button
               type="button"
               onClick={() => setShowChatPopup(false)}
-              className="text-[10px] text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider font-semibold hover:bg-white/5 px-2 py-1 rounded"
+              className="rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 cursor-pointer hover:bg-white/5 hover:text-white"
             >
               Close
             </button>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="min-h-0 flex-1">
             <RoomChatPanel
               messages={room?.chatMessages ?? []}
               currentUserId={user?.id ?? null}
@@ -519,15 +530,14 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
         </div>
       )}
 
-      {/* Invite Friends Popup Panel */}
       {showInvitePopup && (
-        <div className="absolute right-18 top-24 w-72 bg-slate-950/95 border border-sky-200/20 rounded-2xl shadow-2xl backdrop-blur-md p-4 z-30 pointer-events-auto">
-          <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
+        <div className="absolute right-18 top-24 z-30 w-72 rounded-2xl border border-sky-200/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md pointer-events-auto">
+          <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
             <h4 className="text-sm font-bold text-cyan-200">Invite Friends</h4>
             <button
               type="button"
               onClick={() => setShowInvitePopup(false)}
-              className="text-[10px] text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider font-semibold hover:bg-white/5 px-2 py-1 rounded"
+              className="rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 cursor-pointer hover:bg-white/5 hover:text-white"
             >
               Close
             </button>
@@ -536,8 +546,14 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
         </div>
       )}
 
-      {/* 2D UI overlayed on top */}
-      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col p-3 overflow-y-auto">
+      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col overflow-y-auto p-3">
+        <RaceCelebrationOverlay
+          countdownSeconds={countdownSeconds}
+          momentBanner={momentBanner}
+          reactionBursts={reactionBursts}
+          roomStatus={room?.status}
+        />
+
         <div className="pointer-events-auto">
           <RaceRoomHeader
             roomId={roomId}
@@ -551,9 +567,8 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           />
         </div>
 
-        <div className="mt-4 grid gap-4 grid-cols-[minmax(0,1fr)_3.5rem] pointer-events-none flex-1">
-          {/* Left Side: Gameplay (Typing & Live Track) */}
-          <div className="flex flex-col gap-4 pointer-events-auto">
+        <div className="mt-4 grid flex-1 gap-4 grid-cols-[minmax(0,1fr)_3.5rem] pointer-events-none">
+          <div className="pointer-events-auto flex flex-col gap-4">
             <div className="rounded-2xl border border-sky-200/10 bg-slate-950/70 p-1 backdrop-blur-xs">
               <RaceTypingPanel
                 loadingMessage={loadingMessage}
@@ -566,6 +581,15 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
                 onRestart={resetTyping}
               />
             </div>
+
+            <RaceLiveStats
+              accuracy={progressPayload.accuracy}
+              completedWords={completedWords}
+              mistakes={mistakes}
+              progressPercent={progressPercent}
+              streak={currentCorrectStreak}
+              wpm={progressPayload.wpm}
+            />
 
             <div className="rounded-2xl border border-sky-200/10 bg-slate-950/75 p-4 backdrop-blur-xs">
               <RaceTrackView
@@ -583,11 +607,9 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
             </div>
           </div>
 
-          {/* Right Spacer column for floating buttons */}
           <div className="w-12" />
         </div>
 
-        {/* Status Messages overlayed at the bottom */}
         <div className="pointer-events-auto mt-2 flex flex-col gap-2">
           {!isConnected ? (
             <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
