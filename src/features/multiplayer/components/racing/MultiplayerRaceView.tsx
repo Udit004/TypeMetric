@@ -12,7 +12,6 @@ import { RaceTrackView } from "./RaceTrackView";
 import { RaceTypingPanel } from "./RaceTypingPanel";
 import { RoomFriendInvitePanel } from "./RoomFriendInvitePanel";
 import { RoomLobbyView } from "../room/RoomLobbyView";
-
 import { useMultiplayerRoom } from "../../hooks/useMultiplayerRoom";
 import { getRoomApi, joinRoomApi } from "../../services/multiplayerRoomService";
 import { useSoundEffects } from "../../hooks/useSoundEffects";
@@ -54,6 +53,8 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
   const [loadingMessage, setLoadingMessage] = useState("Joining room...");
   const [didCopyLink, setDidCopyLink] = useState(false);
   const [visualNow, setVisualNow] = useState(() => Date.now());
+  const [showChatPopup, setShowChatPopup] = useState(false);
+  const [showInvitePopup, setShowInvitePopup] = useState(false);
   const { playCountdownTick, playRaceStart, playCheering, playVictory, stopCountdownTick, enableSoundOnInteraction } =
     useSoundEffects({ enabled: true, volume: 0.3 });
 
@@ -392,7 +393,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   if (isWaitingInLobby) {
     return (
-      <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
+      <section className="">
         <RaceRoomHeader
           roomId={roomId}
           token={token}
@@ -427,7 +428,7 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           </p>
         ) : null}
 
-        {errorMessage ? (
+        {/* {errorMessage ? (
           <button
             type="button"
             onClick={clearError}
@@ -435,84 +436,176 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           >
             {errorMessage} (click to dismiss)
           </button>
-        ) : null}
+        ) : null} */}
       </section>
     );
   }
 
   return (
-    <section className="space-y-5 rounded-3xl border border-sky-200/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-6">
-      <RaceRoomHeader
-        roomId={roomId}
-        token={token}
-        didCopyLink={didCopyLink}
-        isHost={isHost}
-        roomStatus={room?.status}
-        onCopyInviteLink={handleCopyInviteLink}
-        onStartRace={startRace}
-        onLeaveRoom={handleLeaveRoom}
-      />
+    <section className="relative h-[850px] overflow-hidden rounded-2xl p-2 sm:h-[900px] sm:p-3 border border-sky-200/20">
+      {/* 3D Canvas Scene as the background */}
+      
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_24rem] md:grid-rows-[minmax(0,1fr)_auto]">
-        <div className="min-h-68 md:col-start-1 md:row-start-1">
-          <RaceTypingPanel
-            loadingMessage={loadingMessage}
-            countdownSeconds={countdownSeconds}
-            remainingSeconds={remainingSeconds}
-            roomStatus={room?.status}
-            activeText={activeText}
-            typedCharacters={typedCharacters}
-            currentIndex={currentIndex}
-            onRestart={resetTyping}
-          />
-        </div>
+      {/* Radial gradients for aesthetic enhancement */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(56,189,248,0.2),transparent_42%),radial-gradient(circle_at_82%_20%,rgba(16,185,129,0.18),transparent_42%),radial-gradient(circle_at_50%_78%,rgba(45,212,191,0.15),transparent_46%)]" />
 
-        <div className="rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4 md:col-start-1 md:row-start-2">
-          <RaceTrackView
-            participants={liveParticipants}
-            results={results}
-            winnerUserId={winnerUserId}
-            roomStatus={room?.status}
-            promptText={activeText}
-            displayNow={visualNow}
-            roomStartedAt={roomStartedAt}
-          />
-          <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/55 p-3">
-            <RaceLeaderboard participants={participants} />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:col-start-2 md:row-span-2 md:min-h-136 md:grid-rows-[auto_minmax(0,1fr)]">
-          <RoomFriendInvitePanel roomId={roomId} token={token} />
-          <RoomChatPanel
-            messages={room?.chatMessages ?? []}
-            currentUserId={user?.id ?? null}
-            currentUserName={user?.name ?? null}
-            typingUserNames={typingUserNames}
-            isConnected={isConnected}
-            onSendMessage={(text) => sendChatMessage(roomId, text)}
-            onTypingChange={(isTyping) => sendTypingStatus(roomId, isTyping)}
-            className="h-full"
-          />
-        </div>
-      </div>
-
-      {!isConnected ? (
-        <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
-          Reconnecting to race server...
-        </p>
-      ) : null}
-
-      {errorMessage ? (
+      {/* Floating Buttons Bar for Chat and Invite Popups */}
+      <div className="absolute right-4 top-24 z-20 flex flex-col gap-2.5 pointer-events-auto">
         <button
           type="button"
-          onClick={clearError}
-          className="rounded-lg border border-rose-200/30 bg-rose-500/10 px-3 py-2 text-left text-xs text-rose-100"
+          onClick={() => {
+            setShowChatPopup(!showChatPopup);
+            setShowInvitePopup(false);
+          }}
+          className={`flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition-all duration-200 cursor-pointer ${
+            showChatPopup
+              ? "border-cyan-400 bg-cyan-400/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
+              : "border-white/10 bg-slate-950/75 text-slate-400 hover:text-white hover:border-white/25"
+          }`}
+          title="Toggle Chat"
         >
-          {errorMessage} (click to dismiss)
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 4.75 4.75 0 0 0 3.292-1.412c.389-.387.896-.555 1.432-.555h.341Z" />
+          </svg>
         </button>
-      ) : null}
 
+        <button
+          type="button"
+          onClick={() => {
+            setShowInvitePopup(!showInvitePopup);
+            setShowChatPopup(false);
+          }}
+          className={`flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition-all duration-200 cursor-pointer ${
+            showInvitePopup
+              ? "border-cyan-400 bg-cyan-400/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
+              : "border-white/10 bg-slate-950/75 text-slate-400 hover:text-white hover:border-white/25"
+          }`}
+          title="Toggle Invite Friends"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Chat Popup Panel */}
+      {showChatPopup && (
+        <div className="absolute right-18 top-24 w-88 bg-slate-950/95 border border-sky-200/20 rounded-2xl shadow-2xl backdrop-blur-md p-4 z-30 pointer-events-auto h-[480px] flex flex-col">
+          <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+              <h4 className="text-sm font-bold text-cyan-200">Room Chat</h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowChatPopup(false)}
+              className="text-[10px] text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider font-semibold hover:bg-white/5 px-2 py-1 rounded"
+            >
+              Close
+            </button>
+          </div>
+          <div className="flex-1 min-h-0">
+            <RoomChatPanel
+              messages={room?.chatMessages ?? []}
+              currentUserId={user?.id ?? null}
+              currentUserName={user?.name ?? null}
+              typingUserNames={typingUserNames}
+              isConnected={isConnected}
+              onSendMessage={(text) => sendChatMessage(roomId, text)}
+              onTypingChange={(isTyping) => sendTypingStatus(roomId, isTyping)}
+              className="h-full bg-transparent border-0!"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Invite Friends Popup Panel */}
+      {showInvitePopup && (
+        <div className="absolute right-18 top-24 w-72 bg-slate-950/95 border border-sky-200/20 rounded-2xl shadow-2xl backdrop-blur-md p-4 z-30 pointer-events-auto">
+          <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
+            <h4 className="text-sm font-bold text-cyan-200">Invite Friends</h4>
+            <button
+              type="button"
+              onClick={() => setShowInvitePopup(false)}
+              className="text-[10px] text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider font-semibold hover:bg-white/5 px-2 py-1 rounded"
+            >
+              Close
+            </button>
+          </div>
+          <RoomFriendInvitePanel roomId={roomId} token={token} />
+        </div>
+      )}
+
+      {/* 2D UI overlayed on top */}
+      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col p-3 overflow-y-auto">
+        <div className="pointer-events-auto">
+          <RaceRoomHeader
+            roomId={roomId}
+            token={token}
+            didCopyLink={didCopyLink}
+            isHost={isHost}
+            roomStatus={room?.status}
+            onCopyInviteLink={handleCopyInviteLink}
+            onStartRace={startRace}
+            onLeaveRoom={handleLeaveRoom}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 grid-cols-[minmax(0,1fr)_3.5rem] pointer-events-none flex-1">
+          {/* Left Side: Gameplay (Typing & Live Track) */}
+          <div className="flex flex-col gap-4 pointer-events-auto">
+            <div className="rounded-2xl border border-sky-200/10 bg-slate-950/70 p-1 backdrop-blur-xs">
+              <RaceTypingPanel
+                loadingMessage={loadingMessage}
+                countdownSeconds={countdownSeconds}
+                remainingSeconds={remainingSeconds}
+                roomStatus={room?.status}
+                activeText={activeText}
+                typedCharacters={typedCharacters}
+                currentIndex={currentIndex}
+                onRestart={resetTyping}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-sky-200/10 bg-slate-950/75 p-4 backdrop-blur-xs">
+              <RaceTrackView
+                participants={liveParticipants}
+                results={results}
+                winnerUserId={winnerUserId}
+                roomStatus={room?.status}
+                promptText={activeText}
+                displayNow={visualNow}
+                roomStartedAt={roomStartedAt}
+              />
+              <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                <RaceLeaderboard participants={participants} />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Spacer column for floating buttons */}
+          <div className="w-12" />
+        </div>
+
+        {/* Status Messages overlayed at the bottom */}
+        <div className="pointer-events-auto mt-2 flex flex-col gap-2">
+          {!isConnected ? (
+            <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+              Reconnecting to race server...
+            </p>
+          ) : null}
+
+          {errorMessage ? (
+            <button
+              type="button"
+              onClick={clearError}
+              className="rounded-lg border border-rose-200/30 bg-rose-500/10 px-3 py-2 text-left text-xs text-rose-100 cursor-pointer"
+            >
+              {errorMessage} (click to dismiss)
+            </button>
+          ) : null}
+        </div>
+      </div>
     </section>
   );
 }

@@ -18,6 +18,7 @@ export type PlayerResult = {
 
 interface PodiumSceneProps {
   players: PlayerResult[];
+  className?: string;
 }
 
 const PODIUM_CONFIG: Record<PodiumRank, { position: [number, number, number]; height: number; color: string }> = {
@@ -131,7 +132,7 @@ function Lights() {
   );
 }
 
-export const PodiumScene = memo(function PodiumScene({ players }: PodiumSceneProps) {
+export const PodiumScene = memo(function PodiumScene({ players, className }: PodiumSceneProps) {
   const podiumPlayers = useMemo(() => {
     const filtered = players
       .filter((player) => player.rank === 1 || player.rank === 2 || player.rank === 3)
@@ -160,7 +161,7 @@ export const PodiumScene = memo(function PodiumScene({ players }: PodiumScenePro
   }, [players]);
 
   return (
-    <div className="h-120 w-full sm:h-136">
+    <div className={className || "h-120 w-full sm:h-136"}>
       <Canvas
         shadows
         camera={{ position: [0, 7.2, 10.2], fov: 46 }}

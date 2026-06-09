@@ -52,7 +52,7 @@ export function RoomLobbyView({
   }, []);
 
   return (
-    <section className="relative h-144 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(140deg,#020617_0%,#0b1120_36%,#062135_100%)] p-2 sm:h-168 sm:p-3">
+    <section className="relative h-144 overflow-hidden rounded-2xl p-2 sm:h-168 sm:p-3">
       <div
         className={`pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(56,189,248,0.23),transparent_42%),radial-gradient(circle_at_82%_20%,rgba(16,185,129,0.21),transparent_42%),radial-gradient(circle_at_50%_78%,rgba(45,212,191,0.18),transparent_46%)] ${styles.enterScene} ${isVisible ? styles.visible : ""}`}
       />
