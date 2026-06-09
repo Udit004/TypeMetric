@@ -7,29 +7,13 @@ interface RaceTrackViewProps {
   results: RaceResult[];
   winnerUserId: string | null;
   roomStatus: RoomStatus | undefined;
+  promptText: string;
+  displayNow: number;
+  roomStartedAt: number | null;
 }
 
-const TRACK_POSITION_CLASSES = [
-  "race-track-pos-0",
-  "race-track-pos-1",
-  "race-track-pos-2",
-  "race-track-pos-3",
-  "race-track-pos-4",
-  "race-track-pos-5",
-  "race-track-pos-6",
-  "race-track-pos-7",
-  "race-track-pos-8",
-  "race-track-pos-9",
-  "race-track-pos-10",
-  "race-track-pos-11",
-  "race-track-pos-12",
-];
-
-function getTrackPositionClass(position: number): string {
-  const clamped = Math.min(96, Math.max(4, position));
-  const normalized = (clamped - 4) / 92;
-  const index = Math.round(normalized * (TRACK_POSITION_CLASSES.length - 1));
-  return TRACK_POSITION_CLASSES[index] ?? TRACK_POSITION_CLASSES[0];
+function getTrackPositionPercent(completionRatio: number): number {
+  return Math.min(96, Math.max(4, 4 + completionRatio * 92));
 }
 
 function getRunnerSpeedClass(wpm: number, maxObservedWpm: number): string {
@@ -54,7 +38,15 @@ function getRunnerSpeedClass(wpm: number, maxObservedWpm: number): string {
   return "race-track-runner--speed-5";
 }
 
-export function RaceTrackView({ participants, results, winnerUserId, roomStatus }: RaceTrackViewProps) {
+export function RaceTrackView({
+  participants,
+  results,
+  winnerUserId,
+  roomStatus,
+  promptText,
+  displayNow,
+  roomStartedAt,
+}: RaceTrackViewProps) {
   const maxObservedWpm = useMemo(() => {
     const maxValue = participants.reduce((maxWpm, participant) => {
       return Math.max(maxWpm, participant.progress.wpm);
@@ -68,10 +60,20 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
   }, [results]);
 
   const raceLanes = useMemo(() => {
+    const promptLength = Math.max(1, promptText.trim().length);
+    const elapsedMs = roomStartedAt ? Math.max(0, displayNow - roomStartedAt) : 0;
+
     return participants.map((participant) => {
-      const speedPosition = Math.min(100, (participant.progress.wpm / maxObservedWpm) * 100);
       const rank = rankMap.get(participant.userId);
       const isWinner = winnerUserId === participant.userId;
+
+      const predictedTypedCharacters =
+        roomStatus === "racing"
+          ? (participant.progress.wpm * elapsedMs) / 12000
+          : participant.progress.typedCharacters;
+
+      const completionRatio = Math.min(1, predictedTypedCharacters / promptLength);
+      const speedPosition = getTrackPositionPercent(completionRatio);
 
       const finalPosition =
         roomStatus === "finished" && rank
@@ -82,10 +84,10 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
         ...participant,
         isWinner,
         runnerSpeedClass: getRunnerSpeedClass(participant.progress.wpm, maxObservedWpm),
-        positionClass: getTrackPositionClass(finalPosition),
+        position: finalPosition,
       };
     });
-  }, [maxObservedWpm, participants, rankMap, roomStatus, winnerUserId]);
+  }, [displayNow, maxObservedWpm, participants, promptText, rankMap, roomStartedAt, roomStatus, winnerUserId]);
 
   return (
     <div className="rounded-xl  bg-slate-950/60 p-3">
@@ -117,7 +119,8 @@ export function RaceTrackView({ participants, results, winnerUserId, roomStatus 
               <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 border-t border-dashed border-slate-300/30" />
 
               <div
-                className={`absolute bottom-0.5 z-10 transition-all duration-300 ${participant.positionClass}`}
+                className="absolute bottom-0.5 z-10 transition-[left] duration-100 ease-linear"
+                style={{ left: `${participant.position}%` }}
               >
                 <div
                   className={`race-track-runner ${participant.runnerSpeedClass} ${

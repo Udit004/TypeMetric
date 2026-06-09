@@ -53,10 +53,14 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
   const [loadingMessage, setLoadingMessage] = useState("Joining room...");
   const [didCopyLink, setDidCopyLink] = useState(false);
+  const [visualNow, setVisualNow] = useState(() => Date.now());
   const { playCountdownTick, playRaceStart, playCheering, playVictory, stopCountdownTick, enableSoundOnInteraction } =
     useSoundEffects({ enabled: true, volume: 0.3 });
 
   const participants = useMemo(() => room?.participants ?? [], [room?.participants]);
+  const roomIdValue = room?.roomId ?? null;
+  const roomStatus = room?.status ?? null;
+  const roomStartedAt = room?.startedAt ?? null;
 
   const activeText = room?.promptText || "";
   const parsedText = useMemo(() => parseTextToCharacters(activeText), [activeText]);
@@ -157,6 +161,60 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
   );
 
   useEffect(() => {
+    if (room?.status !== "racing") {
+      return;
+    }
+
+    const tick = () => {
+      setVisualNow(Date.now());
+    };
+
+    tick();
+    const intervalId = window.setInterval(tick, 80);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [room?.status]);
+
+  const progressPayload = useMemo(() => {
+    const elapsedMs = roomStartedAt ? Math.max(0, visualNow - roomStartedAt) : 0;
+
+    return {
+      typedCharacters: typedCharacters.length,
+      correctCharacters,
+      mistakes,
+      accuracy: calculateAccuracy(correctCharacters, typedCharacters.length),
+      wpm: calculateWPM(typedCharacters.length, elapsedMs),
+    };
+  }, [correctCharacters, mistakes, roomStartedAt, typedCharacters.length, visualNow]);
+
+  const currentUserId = user?.id ?? null;
+  const liveParticipants =
+    currentUserId && roomStatus === "racing"
+      ? participants.map((participant) => {
+          if (participant.userId !== currentUserId) {
+            return participant;
+          }
+
+          const elapsedMs = roomStartedAt ? Math.max(0, visualNow - roomStartedAt) : 0;
+
+          return {
+            ...participant,
+            progress: {
+              ...participant.progress,
+              typedCharacters: typedCharacters.length,
+              correctCharacters,
+              mistakes,
+              accuracy: calculateAccuracy(correctCharacters, typedCharacters.length),
+              wpm: calculateWPM(typedCharacters.length, elapsedMs),
+              finishedAt: null,
+            },
+          };
+        })
+      : participants;
+
+  useEffect(() => {
     if (!isAuthenticated || !token || !isConnected) {
       return;
     }
@@ -254,21 +312,21 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
   }, [handleKeyDown, room?.status]);
 
   useEffect(() => {
-    if (!room || room.status !== "racing") {
+    if (!roomIdValue || roomStatus !== "racing") {
       return;
     }
 
-    const elapsedMs =
-      room.startedAt && room.startedAt > 0 ? Math.max(0, Date.now() - room.startedAt) : 0;
+    if (!roomStartedAt) {
+      return;
+    }
 
-    sendProgress(room.roomId, {
-      typedCharacters: typedCharacters.length,
-      correctCharacters,
-      mistakes,
-      accuracy: calculateAccuracy(correctCharacters, typedCharacters.length),
-      wpm: calculateWPM(typedCharacters.length, elapsedMs),
+    const elapsedMs = Math.max(0, Date.now() - roomStartedAt);
+
+    sendProgress(roomIdValue, {
+      ...progressPayload,
+      wpm: calculateWPM(progressPayload.typedCharacters, elapsedMs),
     });
-  }, [correctCharacters, mistakes, room, sendProgress, typedCharacters.length]);
+  }, [progressPayload, roomIdValue, roomStartedAt, roomStatus, sendProgress]);
 
   const inviteLink =
     typeof window !== "undefined"
@@ -418,10 +476,13 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
 
         <div className="rounded-2xl border border-sky-200/20 bg-slate-900/40 p-4 md:col-start-1 md:row-start-2">
           <RaceTrackView
-            participants={participants}
+            participants={liveParticipants}
             results={results}
             winnerUserId={winnerUserId}
             roomStatus={room?.status}
+            promptText={activeText}
+            displayNow={visualNow}
+            roomStartedAt={roomStartedAt}
           />
           <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/55 p-3">
             <RaceLeaderboard participants={participants} />
