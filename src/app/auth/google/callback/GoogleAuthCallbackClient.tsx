@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { useAuth } from "@/share/hooks/useAuth";
 import { setStoredToken } from "@/share/lib/auth-storage";
 
