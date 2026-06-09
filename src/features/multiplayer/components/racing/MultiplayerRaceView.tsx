@@ -405,28 +405,21 @@ export function MultiplayerRaceView({ roomId }: MultiplayerRaceViewProps) {
           onLeaveRoom={handleLeaveRoom}
         />
 
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_24rem]">
-          <RoomLobbyView
-            participants={participants}
-            isHost={isHost}
-            canStartRace={canStartRace}
-            onStartRace={startRace}
-          />
-
-          <div className="grid gap-4 md:min-h-136 md:grid-rows-[auto_minmax(0,1fr)]">
-            <RoomFriendInvitePanel roomId={roomId} token={token} />
-            <RoomChatPanel
-              messages={room?.chatMessages ?? []}
-              currentUserId={user?.id ?? null}
-              currentUserName={user?.name ?? null}
-              typingUserNames={typingUserNames}
-              isConnected={isConnected}
-              onSendMessage={(text) => sendChatMessage(roomId, text)}
-              onTypingChange={(isTyping) => sendTypingStatus(roomId, isTyping)}
-              className="h-full"
-            />
-          </div>
-        </div>
+        <RoomLobbyView
+          participants={participants}
+          isHost={isHost}
+          canStartRace={canStartRace}
+          onStartRace={startRace}
+          roomId={roomId}
+          token={token}
+          currentUserId={user?.id ?? null}
+          currentUserName={user?.name ?? null}
+          messages={room?.chatMessages ?? []}
+          typingUserNames={typingUserNames}
+          isConnected={isConnected}
+          onSendMessage={(text) => sendChatMessage(roomId, text)}
+          onTypingChange={(isTyping) => sendTypingStatus(roomId, isTyping)}
+        />
 
         {!isConnected ? (
           <p className="rounded-lg border border-amber-200/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">

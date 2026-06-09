@@ -156,7 +156,7 @@ export function RoomChatPanel({
   }, [visibleTypingUsers]);
 
   return (
-    <section className={`flex h-full min-h-72 max-h-[68vh] min-w-0 flex-col rounded-2xl border border-sky-200/20 bg-slate-900/40 p-3 sm:p-4 ${className ?? ""}`}>
+    <section className={`flex h-full min-h-80 max-h-[72vh] min-w-0 flex-col rounded-2xl border border-sky-200/20 bg-slate-900/40 p-3 sm:p-4 ${className ?? ""}`}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-200">Room Chat</h3>
         <span className="text-[11px] text-slate-400">{sortedMessages.length} messages</span>
@@ -195,21 +195,23 @@ export function RoomChatPanel({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-3 space-y-2">
-        <textarea
-          value={text}
-          onChange={(event) => handleInputChange(event.target.value)}
-          onKeyDown={handleInputKeyDown}
-          placeholder={isConnected ? "Type your message..." : "Reconnecting chat..."}
-          className="h-12 w-full resize-none rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 outline-none transition focus:border-cyan-400"
-          disabled={!isConnected}
-        />
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] text-slate-400">{typingText || `${text.length}/${MAX_CHAT_MESSAGE_LENGTH}`}</p>
+      <form onSubmit={handleSubmit} className="mt-3">
+        <div className="flex items-end gap-1">
+          <div className="min-w-0 flex-1">
+            <textarea
+              value={text}
+              onChange={(event) => handleInputChange(event.target.value)}
+              onKeyDown={handleInputKeyDown}
+              placeholder={isConnected ? "Type your message..." : "Reconnecting chat..."}
+              className="h-12 w-full resize-none rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 outline-none transition focus:border-cyan-400"
+              disabled={!isConnected}
+            />
+          </div>
+
           <button
             type="submit"
             disabled={!isConnected || text.trim().length === 0}
-            className="cursor-pointer rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            className="shrink-0 cursor-pointer rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
           >
             Send
           </button>

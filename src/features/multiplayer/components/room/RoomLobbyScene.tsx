@@ -8,8 +8,6 @@ import { MultiplayerPlayer } from "../../types/multiplayerTypes";
 
 interface RoomLobbySceneProps {
   participants: MultiplayerPlayer[];
-  title?: string;
-  description?: string;
 }
 
 const MODEL_POOL = [
@@ -124,12 +122,8 @@ function CameraController({ targetY }: { targetY: number }) {
 
 function LobbyStage({
   players,
-  title,
-  description,
 }: {
   players: MultiplayerPlayer[];
-  title: string;
-  description: string;
 }) {
   const arranged = useMemo(() => {
     const visible = players.slice(0, 6);
@@ -171,7 +165,7 @@ function LobbyStage({
       </mesh>
 
       <Text
-        position={[-3.2,2.5, -2.78]}
+        position={[-3.2, 2.5, -2.78]}
         fontSize={0.3}
         color="#7dd3fc"
         anchorX="center"
@@ -181,7 +175,6 @@ function LobbyStage({
       >
         LOBBY
       </Text>
-
 
       {/* <Text
         position={[-3.2, 2.44, -2.78]}
@@ -237,11 +230,9 @@ function LobbyStage({
 
 export const RoomLobbyScene = memo(function RoomLobbyScene({
   participants,
-  title = "Ready Check Arena",
-  description = "All players wait here before each round. Prompt is hidden until the race starts.",
 }: RoomLobbySceneProps) {
   return (
-    <div className="h-80 w-full sm:h-96">
+    <div className="h-full w-full">
       <Canvas
         shadows
         camera={{ position: [0, 0.6, 9.5], fov: 30 }}
@@ -263,7 +254,9 @@ export const RoomLobbyScene = memo(function RoomLobbyScene({
 
         <CameraController targetY={0.8} />
 
-        <LobbyStage players={participants} title={title} description={description} />
+        <LobbyStage
+          players={participants}
+        />
 
         <Environment preset="city" />
       </Canvas>
