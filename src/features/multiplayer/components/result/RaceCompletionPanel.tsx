@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Howl } from "howler";
 import { MultiplayerPlayer, RaceResult, RoomStatus } from "../../types/multiplayerTypes";
 import { RaceRoomHeader } from "../racing/RaceRoomHeader";
-import { RaceCompletionScene } from "./RaceCompletionScene";
 import { type CompletionRow } from "./RaceCompletionPanel2D";
 import { PodiumScene, type PlayerResult } from "./3d/PodiumScene";
 
@@ -148,16 +147,14 @@ export function RaceCompletionPanel({
     onStartNextRace();
   };
 
-  const podiumPlayers = useMemo<PlayerResult[]>(() => {
-    return topThree.map((entry) => ({
-      id: entry.userId,
-      name: entry.name,
-      rank: entry.rank as 1 | 2 | 3,
-      score: entry.score,
-      wpm: entry.wpm,
-      accuracy: entry.accuracy,
-    }));
-  }, [topThree]);
+  const podiumPlayers: PlayerResult[] = topThree.map((entry) => ({
+    id: entry.userId,
+    name: entry.name,
+    rank: entry.rank as 1 | 2 | 3,
+    score: entry.score,
+    wpm: entry.wpm,
+    accuracy: entry.accuracy,
+  }));
 
   return (
     <section className="relative h-[750px] overflow-hidden rounded-2xl p-2 sm:h-[800px] sm:p-3 border border-sky-200/20">

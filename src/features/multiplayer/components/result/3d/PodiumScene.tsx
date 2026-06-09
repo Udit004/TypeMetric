@@ -1,7 +1,7 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls, Sparkles } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, Sparkles } from "@react-three/drei";
 import { memo, useMemo } from "react";
 import { Avatar } from "./Avatar";
 import { PodiumBlock, PodiumRank } from "./PodiumBlock";
@@ -22,9 +22,9 @@ interface PodiumSceneProps {
 }
 
 const PODIUM_CONFIG: Record<PodiumRank, { position: [number, number, number]; height: number; color: string }> = {
-  1: { position: [0, 0, 0], height: 2.5, color: "#d4af37" },
-  2: { position: [-3, -0.5, 0], height: 1.6, color: "#94a3b8" },
-  3: { position: [3, -0.8, 0], height: 1.2, color: "#cd7f32" },
+  1: { position: [1.2, 0, 0], height: 2.5, color: "#d4af37" },
+  2: { position: [-1.3, -0.55, 0], height: 1.6, color: "#94a3b8" },
+  3: { position: [4.1, -0.75, 0], height: 1.2, color: "#cd7f32" },
 };
 
 const RANK_ORDER: PodiumRank[] = [2, 1, 3];
@@ -132,6 +132,14 @@ function Lights() {
   );
 }
 
+function ResultCameraController() {
+  useFrame(({ camera }) => {
+    camera.lookAt(1.1, 3.55, 0.2);
+  });
+
+  return null;
+}
+
 export const PodiumScene = memo(function PodiumScene({ players, className }: PodiumSceneProps) {
   const podiumPlayers = useMemo(() => {
     const filtered = players
@@ -164,7 +172,7 @@ export const PodiumScene = memo(function PodiumScene({ players, className }: Pod
     <div className={className || "h-120 w-full sm:h-136"}>
       <Canvas
         shadows
-        camera={{ position: [0, 7.2, 10.2], fov: 46 }}
+        camera={{ position: [1.7, 4.25, 11.8], fov: 39 }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 1.75]}
       >
@@ -172,8 +180,8 @@ export const PodiumScene = memo(function PodiumScene({ players, className }: Pod
 
         <Lights />
         <Stage />
-        <Sparkles count={90} scale={[16, 7, 10]} size={4} speed={0.45} color="#fde68a" />
-        <Sparkles count={50} scale={[14, 5, 8]} position={[0, 2, -4]} size={5} speed={0.35} color="#93c5fd" />
+        <Sparkles count={24} scale={[16, 7, 10]} size={2.9} speed={0.08} color="#fde68a" />
+        <Sparkles count={16} scale={[14, 5, 8]} position={[0, 2, -4]} size={3.2} speed={0.06} color="#93c5fd" />
 
         {RANK_ORDER.map((rank) => {
           const player = podiumPlayers.find((item) => item.rank === rank);
@@ -209,15 +217,7 @@ export const PodiumScene = memo(function PodiumScene({ players, className }: Pod
 
         <Environment preset="studio" />
 
-        <OrbitControls
-          enablePan={false}
-          enableZoom={false}
-          minPolarAngle={0.75}
-          maxPolarAngle={1.25}
-          minAzimuthAngle={-0.45}
-          maxAzimuthAngle={0.45}
-          target={[0, 1.35, 0]}
-        />
+        <ResultCameraController />
       </Canvas>
     </div>
   );

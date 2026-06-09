@@ -1,6 +1,5 @@
-import { useFrame } from "@react-three/fiber";
-import { memo, useMemo, useRef } from "react";
-import { Box3, Group, Mesh, Object3D, Vector3 } from "three";
+import { memo, useMemo } from "react";
+import { Box3, Mesh, Object3D, Vector3 } from "three";
 import { Billboard, Text, useGLTF } from "@react-three/drei";
 
 interface AvatarProps {
@@ -132,37 +131,16 @@ export const Avatar = memo(function Avatar({
   accuracy,
   position,
 }: AvatarProps) {
-  const floatRef = useRef<Group>(null);
-  const spinRef = useRef<Group>(null);
-  const firstRankRingRef = useRef<Mesh>(null);
-
-  const seed = useMemo(() => hashSeed(id), [id]);
-  const floatSpeed = 1.1 + (seed % 7) * 0.04;
-  const floatPhase = (seed % 360) * (Math.PI / 180);
   const modelPath = useMemo(() => resolveModelPath(id, rank, avatarUrl), [avatarUrl, id, rank]);
   const modelHeight = useMemo(() => targetModelHeight(rank), [rank]);
 
-  useFrame((state, delta) => {
-    if (!floatRef.current || !spinRef.current) {
-      return;
-    }
-
-    spinRef.current.rotation.y += delta * 0.55;
-    floatRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * floatSpeed + floatPhase) * 0.05;
-
-    if (firstRankRingRef.current) {
-      firstRankRingRef.current.rotation.z += delta * 0.9;
-    }
-  });
-
   return (
-    <group ref={floatRef} position={position}>
-      <group ref={spinRef}>
+    <group position={position}>
+      <group>
         <CharacterModel modelPath={modelPath} rank={rank} />
 
         {rank === 1 ? (
           <mesh
-            ref={firstRankRingRef}
             position={[0, modelHeight + 0.18, 0]}
             rotation={[Math.PI / 2, 0, 0]}
           >
