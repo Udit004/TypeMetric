@@ -200,16 +200,23 @@ export function TextRenderer({
       aria-label="Typing text"
       className="relative rounded-2xl bg-slate-900/75 p-5 font-mono text-center text-lg leading-8 shadow-xl shadow-slate-950/45 sm:text-xl"
     >
+      {onRestart ? (
+        <button
+          type="button"
+          onClick={onRestart}
+          aria-label="Restart typing test"
+          className="absolute right-3 bottom-3 z-30 rounded-xl border border-cyan-300/45 bg-cyan-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-500/20 cursor-pointer"
+        >
+          Restart
+        </button>
+      ) : null}
+
       {isFinished ? (
         <div className="flex min-h-40 items-center justify-center">
           {onRestart ? (
-            <button
-              type="button"
-              onClick={onRestart}
-              className="rounded-xl border border-cyan-300/45 bg-cyan-500/10 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-500/20 cursor-pointer"
-            >
-              Restart Test
-            </button>
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-300">
+              Test Complete
+            </p>
           ) : (
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-300">
               Test Complete
@@ -221,19 +228,30 @@ export function TextRenderer({
           {visibleLineRanges.map((lineRange, lineIndex) => (
             <div
               key={`${lineRange.start}-${lineRange.end}`}
-              className={lineIndex < visibleLineRanges.length - 1 ? "min-h-8 whitespace-pre overflow-hidden" : "whitespace-pre overflow-hidden"}
+              className={
+                lineIndex < visibleLineRanges.length - 1
+                  ? "min-h-8 whitespace-pre overflow-hidden"
+                  : "whitespace-pre overflow-hidden"
+              }
             >
-              {parsedText.slice(lineRange.start, lineRange.end).map((char, localIndex) => {
-                const index = lineRange.start + localIndex;
-                const status = getCharacterStatus(index, char, typedCharacters, currentIndex);
+              {parsedText
+                .slice(lineRange.start, lineRange.end)
+                .map((char, localIndex) => {
+                  const index = lineRange.start + localIndex;
+                  const status = getCharacterStatus(
+                    index,
+                    char,
+                    typedCharacters,
+                    currentIndex
+                  );
 
-                return (
-                  <span key={`${index}-${char}`}>
-                    {index === currentIndex ? <Cursor /> : null}
-                    <Character char={char} status={status} />
-                  </span>
-                );
-              })}
+                  return (
+                    <span key={`${index}-${char}`}>
+                      {index === currentIndex ? <Cursor /> : null}
+                      <Character char={char} status={status} />
+                    </span>
+                  );
+                })}
             </div>
           ))}
           {currentIndex >= parsedText.length &&
