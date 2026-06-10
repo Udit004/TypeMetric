@@ -70,6 +70,12 @@ export function Navbar() {
 					>
 						Multiplayer
 					</Link>
+					<Link
+						href="/about"
+						className="rounded-lg border border-cyan-300/35 bg-slate-900/40 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-slate-800"
+					>
+						About
+					</Link>
 				</div>
 
 				{/* Desktop Actions */}
@@ -165,83 +171,10 @@ export function Navbar() {
 						<Link
 							href="/leaderboard"
 							onClick={closeMobileMenu}
-							className="block rounded-lg border border-white/15 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 text-center"
+							className="block rounded-lg border border-cyan-300/35 bg-slate-900/40 px-3 py-1.5 text-sm font-semibold text-cyan-100 transition hover:bg-slate-800"
 						>
 							Leaderboard
 						</Link>
-						{isLoading ? (
-							<span className="block rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-xs text-slate-300">
-								Checking session...
-							</span>
-						) : isAuthenticated && user ? (
-							<>
-								<div className="relative">
-									<button
-										type="button"
-										onClick={toggleNotifications}
-										className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
-									>
-										<span>Notifications</span>
-										{unreadCount > 0 ? (
-											<span className="rounded-full bg-cyan-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">
-												{unreadCount > 9 ? "9+" : unreadCount}
-											</span>
-										) : null}
-									</button>
-									<NotificationCenter
-										isOpen={isNotificationOpen}
-										onClose={closeNotifications}
-									/>
-								</div>
-								<Link
-									href="/multiplayer"
-									onClick={closeMobileMenu}
-									className="block rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20 text-center"
-								>
-									Multiplayer
-								</Link>
-								<Link
-									href="/profile"
-									onClick={closeMobileMenu}
-									className="block rounded-lg border border-emerald-200/30 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-100 text-center transition hover:bg-emerald-300/20"
-								>
-									{user.name}
-								</Link>
-								<button
-									type="button"
-									onClick={() => {
-										logout();
-										closeMobileMenu();
-									}}
-									className="w-full rounded-lg border border-emerald-200/30 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-300/20 cursor-pointer"
-								>
-									Logout
-								</button>
-							</>
-						) : (
-							<>
-								<button
-									type="button"
-									onClick={() => {
-										openAuthModal("login");
-										closeMobileMenu();
-									}}
-									className="w-full rounded-lg border border-white/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 cursor-pointer"
-								>
-									Login
-								</button>
-								<button
-									type="button"
-									onClick={() => {
-										openAuthModal("register");
-										closeMobileMenu();
-									}}
-									className="w-full rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300 cursor-pointer"
-								>
-									Sign up
-								</button>
-							</>
-						)}
 					</div>
 				</div>
 			)}

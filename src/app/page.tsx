@@ -1,17 +1,21 @@
-import HeroSection from "@/features/homePage/components/heroSection";
-import { TypingInputClient } from "@/features/typing-engine/components/TypingInputClient";
-import { Footer } from "@/share/components/footer";
+import type { Metadata } from "next";
+import { HomePageContent } from "@/features/homePage/components/HomePageContent";
+
+export const metadata: Metadata = {
+  title: "TypeMetric — Precision Typing Speed & Analytics",
+  description:
+    "TypeMetric is a typing speed test with real-time WPM, accuracy tracking, mistake analysis, multiplayer racing, and leaderboards.",
+  keywords: [
+    "typing speed test",
+    "WPM calculator",
+    "typing accuracy",
+    "typing analytics",
+    "multiplayer typing",
+    "leaderboard",
+    "typing practice",
+  ],
+};
 
 export default function Home() {
-  return (
-    <>
-      <HeroSection />
-
-      <div className="rounded-3xl border border-sky-200/20 bg-slate-950/40 p-3 shadow-[0_30px_80px_rgba(2,6,23,0.65)] backdrop-blur-md sm:p-5">
-        <TypingInputClient />
-      </div>
-
-      <Footer />
-    </>
-  );
+  return <HomePageContent />;
 }
