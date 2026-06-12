@@ -13,11 +13,12 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const isRoomPage = pathname?.startsWith("/multiplayer/room/") ?? false;
+  const isLudoPage = pathname?.startsWith("/ludo") ?? false;
 
   return (
     <NotificationProvider>
       <div className="relative min-h-screen">
-        {!isRoomPage ? (
+        {!isRoomPage && !isLudoPage ? (
           <div className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm ">
             <div className="w-full px-3 py-3 md:px-5">
               <Navbar />

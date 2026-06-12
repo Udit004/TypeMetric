@@ -105,7 +105,7 @@ export default function GodotGame() {
   }, []);
 
   return (
-    <div className="w-full h-50vh overflow-hidden">
+    <div className="w-full h-full overflow-hidden">
       <canvas
         ref={canvasRef}
         id="godot-canvas"
