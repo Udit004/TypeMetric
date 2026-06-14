@@ -16,11 +16,22 @@ const START_CELLS = {
 # ----------------------------
 enum Mode { OFFLINE, ONLINE }
 
-@export var mode: Mode = Mode.OFFLINE
+@export var mode: Mode = Mode.ONLINE
 
 # Assign this in Inspector (drag your Network manager node), or leave null and set via %NetworkName.
 @export var network_path: NodePath
 var network: Node = null
+
+@onready var turn_panel = get_parent().get_node("TurnPanel")
+@onready var ui_box = turn_panel.get_node("VBoxContainer")
+
+@onready var current_player_label = ui_box.get_node("CurrentPlayerLabel")
+@onready var dice_value_label = ui_box.get_node("DiceValueLabel")
+@onready var dice_image = ui_box.get_node("DiceImage")
+@onready var roll_dice_button = ui_box.get_node("RollDiceButton")
+@onready var status_label = ui_box.get_node("StatusLabel")
+@onready var dice_audio = get_parent().get_node("DiceAudio")
+@onready var move_audio = get_parent().get_node("MoveAudio")
 
 var players = {}
 var active_turn_order = []
@@ -40,14 +51,34 @@ var cells = []
 # ONLINE mode state
 var _online_waiting_for_server: bool = false
 
+func get_selected_players() -> Array:
+	match GameManager.player_count:
+		2:
+			return ["RED", "GREEN"]
+
+		3:
+			return ["RED", "GREEN", "YELLOW"]
+
+		4:
+			return ["RED", "GREEN", "YELLOW", "BLUE"]
+
+		_:
+			return ["RED", "GREEN"]
+
+
+
+
 func _ready():
 	randomize()
+	
+	print(
+		"Players:",
+		GameManager.player_count
+	)
 
-	network = null
-	if network_path != NodePath("") and has_node(network_path):
-		network = get_node(network_path)
-	elif has_node("Network"):
-		network = %Network
+	network = get_node_or_null("/root/NetworkManager")
+	if network == null:
+		push_error("NetworkManager Autoload not found!")
 
 	if mode == Mode.ONLINE:
 		_init_online()
@@ -66,7 +97,7 @@ func _ready():
 	)
 
 	# Configure players dynamically based on the nodes present in the scene
-	var player_colors = ["RED", "GREEN", "YELLOW", "BLUE"]
+	var player_colors = get_selected_players()
 	var token_prefixes = {
 		"RED": "RedToken_",
 		"BLUE": "BlueToken_",
@@ -154,7 +185,25 @@ func _ready():
 	else:
 		push_error("No players found in scene!")
 
+	# Dynamically add a label to show the local player's color
+	if mode == Mode.ONLINE and GameManager.local_player_color != "":
+		var color_label = Label.new()
+		color_label.text = "You are: " + GameManager.local_player_color
+		color_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		match GameManager.local_player_color:
+			"RED":
+				color_label.modulate = Color.RED
+			"GREEN":
+				color_label.modulate = Color.GREEN
+			"BLUE":
+				color_label.modulate = Color.DODGER_BLUE
+			"YELLOW":
+				color_label.modulate = Color.GOLD
+		ui_box.add_child(color_label)
+
 	update_turn_ui()
+
+
 
 func _init_online() -> void:
 	if network == null:
@@ -167,6 +216,10 @@ func _init_online() -> void:
 		network.dice_result_received.connect(_on_online_dice_result_received)
 	if network.has_signal("tokens_state_received"):
 		network.tokens_state_received.connect(_on_online_tokens_state_received)
+	if network.has_signal("token_moved"):
+		network.token_moved.connect(_on_online_token_moved)
+	if network.has_signal("turn_changed"):
+		network.turn_changed.connect(_on_online_turn_changed)
 
 func _on_roll_dice_button_pressed():
 	roll_dice()
@@ -180,17 +233,27 @@ func roll_dice():
 		print("Dice roll ignored: turn is currently processing")
 		return
 
-	if waiting_for_player_choice:
-		print("Choose a token first")
+	if mode == Mode.ONLINE and current_player != GameManager.local_player_color:
+		print("Not your turn to roll! Waiting for ", current_player)
+		set_status("Waiting for " + current_player)
 		return
 
+	if waiting_for_player_choice:
+		print("Choose a token first")
+		set_status("Choose a token")
+		return
+	
+	
+	
 	if is_token_moving:
 		print("Token is moving")
+		set_status("token is moving")
 		return
 
 	is_processing_turn = true
 
 	# OFFLINE: keep your logic unchanged
+	play_dice_sound()
 	if mode == Mode.OFFLINE:
 		do_offline_dice_roll()
 		return
@@ -211,10 +274,11 @@ func roll_dice():
 
 func do_offline_dice_roll() -> void:
 	# Your original offline flow
+	set_status("Dice is rolling")
 	await animate_dice()
 	dice_value = randi_range(1, 6)
-	$UI/DiceValueLabel.text = str(dice_value)
-	$UI/DiceImage.texture_normal = dice_faces[dice_value - 1]
+	dice_value_label.text = str(dice_value)
+	dice_image.texture_normal = dice_faces[dice_value - 1]
 	print("Dice Rolled for ", current_player, ": ", dice_value)
 
 	# Handle consecutive sixes rule
@@ -223,11 +287,12 @@ func do_offline_dice_roll() -> void:
 		print("Consecutive sixes: ", consecutive_sixes)
 		if consecutive_sixes == 3:
 			print("Three consecutive sixes! Turn cancelled.")
+			set_status("Turn cancelled")
 			await get_tree().create_timer(1.0).timeout
 			switch_turn()
 			is_processing_turn = false
 			dice_value = 0
-			$UI/DiceValueLabel.text = "-"
+			dice_value_label.text = "-"
 			return
 	else:
 		consecutive_sixes = 0
@@ -239,41 +304,77 @@ func _on_online_dice_result_received(server_dice_value: int) -> void:
 	_online_waiting_for_server = false
 	is_processing_turn = false
 	dice_value = int(server_dice_value)
-	$UI/DiceValueLabel.text = str(dice_value)
-	$UI/DiceImage.texture_normal = dice_faces[dice_value - 1]
+	dice_value_label.text = str(dice_value)
+	dice_image.texture_normal = dice_faces[dice_value - 1]
 
-	# Apply consecutive sixes rule locally (server also should broadcast tokens state; for now keep same rule)
+	# Apply consecutive sixes rule locally
 	if dice_value == 6:
 		consecutive_sixes += 1
 		if consecutive_sixes == 3:
 			await get_tree().create_timer(1.0).timeout
-			switch_turn()
+			if current_player == GameManager.local_player_color:
+				switch_turn()
 			is_processing_turn = false
 			dice_value = 0
-			$UI/DiceValueLabel.text = "-"
+			dice_value_label.text = "-"
 			return
 	else:
 		consecutive_sixes = 0
 
-	# Continue using your existing local move-resolution logic.
-	# IMPORTANT: In a real multiplayer you would also validate/authoritatively move on server.
-	calculate_valid_tokens()
+	if current_player == GameManager.local_player_color:
+		calculate_valid_tokens()
+
+func play_dice_sound():
+
+	if dice_audio.playing:
+		dice_audio.stop()
+
+	dice_audio.play()
+
+func play_move_sound():
+
+	if move_audio.playing:
+		move_audio.stop()
+
+	move_audio.play()
 
 func _on_online_tokens_state_received(tokens_by_player: Dictionary) -> void:
 	# tokens_by_player expected shape (placeholder):
 	# { "RED": [ {"token_index":0,"is_in_home":bool,"current_cell":int,"steps_travelled":int,"completed":bool,"pos":Vector2}, ... ], ... }
 	# Since your backend broadcast is not implemented in this repo yet, this method currently just logs.
 	print("[ONLINE] tokens_state_received: ", tokens_by_player)
-	# TODO: apply positions when backend contract is finalized.
+
+func _on_online_token_moved(player_color: String, token_index: int, steps: int) -> void:
+	if player_color == GameManager.local_player_color:
+		return # We already moved this locally
+
+	print("[ONLINE] Token moved: ", player_color, " index ", token_index, " steps ", steps)
+	if players.has(player_color):
+		var token = players[player_color]["tokens"][token_index]
+		
+		# Set dice_value temporarily for the animation
+		var original_dice = dice_value
+		dice_value = steps
+		
+		await perform_move(token, false)
+		
+		dice_value = original_dice
+
+func _on_online_turn_changed(new_turn: String) -> void:
+	print("[ONLINE] Turn changed to: ", new_turn)
+	current_player = new_turn
+	consecutive_sixes = 0
+	is_processing_turn = false
+	update_turn_ui()
 
 func _dice_ui_reset() -> void:
 	dice_value = 0
-	$UI/DiceValueLabel.text = "-"
+	dice_value_label.text = "-"
 
 func animate_dice():
 	for i in range(15):
 		var random_face = randi_range(0, 5)
-		$UI/DiceImage.texture_normal = dice_faces[random_face]
+		dice_image.texture_normal = dice_faces[random_face]
 		await get_tree().create_timer(0.05).timeout
 
 func calculate_valid_tokens():
@@ -294,6 +395,9 @@ func calculate_valid_tokens():
 		if token.is_in_home:
 			if dice_value == 6:
 				valid_tokens.append(token)
+				set_status("chose token")
+			else:
+				set_status("Invalid")
 		else:
 			# Exact finish check
 			var max_steps = PATH_LENGTH + final_cells.size()
@@ -305,21 +409,27 @@ func calculate_valid_tokens():
 		await get_tree().create_timer(1.0).timeout
 
 		dice_value = 0
-		$UI/DiceValueLabel.text = "-"
+		dice_value_label.text = "-"
 
 		switch_turn()
 		is_processing_turn = false
 		return
 
 	if valid_tokens.size() == 1:
+		set_status("token moving")
+		play_move_sound()
 		await perform_move(valid_tokens[0])
 		return
 
 	waiting_for_player_choice = true
 	print("Choose a token")
+	set_status("choose a token")
 
 func _on_token_clicked(token):
 	if token.player_color != current_player:
+		return
+
+	if mode == Mode.ONLINE and current_player != GameManager.local_player_color:
 		return
 
 	if not waiting_for_player_choice:
@@ -330,8 +440,12 @@ func _on_token_clicked(token):
 
 	await perform_move(token)
 
-func perform_move(token):
+func perform_move(token, is_local_action: bool = true):
+	play_move_sound()
 	waiting_for_player_choice = false
+
+	if is_local_action and mode == Mode.ONLINE and network != null:
+		network.send_token_move(token.player_color, token.token_index, dice_value)
 
 	var rolled_six = (dice_value == 6)
 	var was_completed_before = token.completed
@@ -352,6 +466,10 @@ func perform_move(token):
 
 	if is_game_over:
 		is_processing_turn = false
+		return
+
+	# If it's not local player's action, we don't calculate turns
+	if not is_local_action:
 		return
 
 	# Extra turn rules
@@ -375,10 +493,9 @@ func perform_move(token):
 		switch_turn()
 		is_processing_turn = false
 
-	# In online mode, after local resolution you would send the final token state to backend.
-	# For now, we only clear local UI.
+	# Clear local UI
 	dice_value = 0
-	$UI/DiceValueLabel.text = "-"
+	dice_value_label.text = "-"
 	valid_tokens.clear()
 
 func release_token_from_home(token):
@@ -484,12 +601,18 @@ func check_win_conditions():
 				break
 		if all_completed:
 			is_game_over = true
-			$UI/CurrentPlayerLabel.text = color + " WINS!"
-			$UI/RollDiceButton.disabled = true
+			current_player_label.text = color + " WINS!"
+			roll_dice_button.disabled = true
 			break
 
 func switch_turn():
 	print("SWITCHING TURN")
+	set_status("Turn Change")
+
+	if mode == Mode.ONLINE:
+		if network != null:
+			network.send_turn_end()
+		return
 
 	var active_players = []
 	for color in ["RED", "GREEN", "YELLOW", "BLUE"]:
@@ -520,10 +643,40 @@ func is_player_completed(player_color: String) -> bool:
 			return false
 	return true
 
+
 func update_turn_ui():
-	$UI/CurrentPlayerLabel.text = current_player + " TURN"
+
+	current_player_label.text = current_player + " TURN"
+	set_status("Roll Dice")
+	
+	var is_my_turn = (mode == Mode.OFFLINE) or (current_player == GameManager.local_player_color)
+	
+	if is_my_turn:
+		dice_image.visible = true
+		roll_dice_button.visible = true
+	else:
+		dice_image.visible = false
+		roll_dice_button.visible = false
+	
+	match current_player:
+
+		"RED":
+			current_player_label.modulate = Color.RED
+
+		"GREEN":
+			current_player_label.modulate = Color.GREEN
+
+		"BLUE":
+			current_player_label.modulate = Color.DODGER_BLUE
+
+		"YELLOW":
+			current_player_label.modulate = Color.GOLD
+
 	print("UI Updated")
+
 
 func _on_dice_image_pressed() -> void:
 	roll_dice()
-
+	
+func set_status(message:String):
+	status_label.text = message

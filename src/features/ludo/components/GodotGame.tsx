@@ -16,9 +16,10 @@ export default function GodotGame() {
   useEffect(() => {
     let resizeHandler: (() => void) | null = null;
 
-    // JWT from your auth system
-    const token = localStorage.getItem("token");
+    // JWT from your auth system (must match auth-storage.ts TOKEN_KEY)
+    const token = typeof window !== "undefined" ? localStorage.getItem("typemetric_auth_token") : null;
     window.GODOT_JWT = token || "";
+
 
     // Restore Next.js title
     document.title = "TypeMetric - Ludo";
@@ -105,11 +106,11 @@ export default function GodotGame() {
   }, []);
 
   return (
-    <div className="w-full h-full overflow-hidden">
+    <div className="w-full h-full mt-10 overflow-hidden">
       <canvas
         ref={canvasRef}
         id="godot-canvas"
-        className="w-full h-full block"
+        className="w-full h-80% block"
       />
     </div>
   );
