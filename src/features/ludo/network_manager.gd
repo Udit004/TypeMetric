@@ -14,7 +14,8 @@ enum Mode { OFFLINE, ONLINE }
 
 ## WebSocket url for ONLINE mode
 ## Change as needed (example uses the /ws endpoint with test=ludo).
-@export var ws_url: String = "ws://localhost:5000/ws"
+# @export var ws_url: String = "ws://localhost:5000/ws"
+@export var ws_url: String = "wss://type-metric-backend.onrender.com/ws"
 
 signal dice_result_received(dice_value: int)
 signal tokens_state_received(tokens_by_player)
