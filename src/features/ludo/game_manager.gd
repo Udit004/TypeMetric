@@ -173,6 +173,10 @@ func _on_create_room_completed(result: int, response_code: int, _headers: Packed
 	is_host = true
 
 	print("[GameManager] room_id set:", room_id)
+	
+	if Engine.has_singleton("JavaScriptBridge"):
+		JavaScriptBridge.eval("if (window.onLudoRoomJoined) window.onLudoRoomJoined('" + room_id + "');")
+		
 	http.queue_free()
 	_go_to_lobby()
 
@@ -239,6 +243,10 @@ func _on_join_room_completed(result: int, response_code: int, _headers: PackedSt
 	is_host = false
 
 	print("[GameManager] joined room_id:", room_id)
+	
+	if Engine.has_singleton("JavaScriptBridge"):
+		JavaScriptBridge.eval("if (window.onLudoRoomJoined) window.onLudoRoomJoined('" + room_id + "');")
+		
 	http.queue_free()
 	_go_to_lobby()
 
