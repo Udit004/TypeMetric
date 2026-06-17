@@ -41,34 +41,40 @@ export function Navbar() {
 	};
 
 	return (
-		<section className="mb-1">
-			<div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-2xl border border-sky-200/20 bg-transparent px-4 py-3 backdrop-blur-sm sm:px-5">
-				<Link href="/" className="flex items-center gap-3 sm:gap-4 transition hover:opacity-80">
+		<section className="sticky top-0 z-50 py-2 sm:py-3">
+			<div className="grid grid-cols-[auto_1fr_auto] items-center justify-between gap-4 rounded-2xl border border-sky-200/10 bg-slate-900/60 backdrop-blur-xl px-4 py-2 sm:px-5 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+				<Link href="/" className="flex items-center gap-3 transition hover:opacity-80">
 					<Image
 						src="/assests/images/logo.png"
 						alt="TypeMetric logo"
-						width={64}
-						height={64}
-						className="h-10 w-10 sm:h-12 sm:w-12"
+						width={40}
+						height={40}
+						className="h-8 w-8 sm:h-9 sm:w-9"
 						priority
 					/>
-					<h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+					<h1 className="text-xl font-black tracking-tight text-white sm:text-2xl drop-shadow-md">
 						TypeMetric
 					</h1>
 				</Link>
 
 				<div className="hidden sm:flex items-center justify-center gap-2">
 					<Link
-						href="/leaderboard"
-						className="rounded-lg border border-cyan-300/35 bg-slate-900/40 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-slate-800"
+						href="/typing-test"
+						className="rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
 					>
-						Leaderboard
+						Typing Test
 					</Link>
 					<Link
 						href="/multiplayer"
 						className="rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
 					>
 						Multiplayer
+					</Link>
+					<Link
+						href="/leaderboard"
+						className="rounded-lg border border-cyan-300/35 bg-slate-900/40 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-slate-800"
+					>
+						Leaderboard
 					</Link>
 					<Link
 						href="/about"

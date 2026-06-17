@@ -26,9 +26,8 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         ) : null}
         <main
-          className={`relative flex min-h-screen w-full flex-col px-3 pb-8 md:px-5 ${
-            isRoomPage ? "pt-0" : "pt-30"
-          }`}
+          className={`relative flex min-h-screen w-full flex-col px-3 pb-8 md:px-5 ${isRoomPage ? "pt-0" : "pt-30"
+            }`}
         >
           {children}
         </main>
