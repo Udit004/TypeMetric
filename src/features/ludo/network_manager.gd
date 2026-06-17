@@ -8,14 +8,14 @@ extends Node
 # NOTE: This script only provides a small API (emit signals + helper methods).
 # You still need to call these methods from your board.gd.
 
-enum Mode { OFFLINE, ONLINE }
-
-@export var mode: Mode = Mode.ONLINE
+func is_online_mode() -> bool:
+	return GameManager.game_mode == "ONLINE"
 
 ## WebSocket url for ONLINE mode
 ## Change as needed (example uses the /ws endpoint with test=ludo).
-# @export var ws_url: String = "ws://localhost:5000/ws"
-@export var ws_url: String = "wss://type-metric-backend.onrender.com/ws"
+@export var ws_url: String = "ws://localhost:5000/ws"
+#@export var ws_url: String = "wss://type-metric-backend.onrender.com/ws"
+
 
 signal dice_result_received(dice_value: int)
 signal tokens_state_received(tokens_by_player)
@@ -33,40 +33,37 @@ var _sent: bool = false
 func _ready() -> void:
 	print("NETWORK READY")
 
+func start_connection() -> void:
+	if not is_online_mode():
+		print("[LudoNetwork] Cannot start connection in Offline mode")
+		return
+		
 	print("JWT = ", GameManager.jwt_token)
+	print("GAME MODE = ", GameManager.game_mode)
 
-	print("MODE = ", mode)
-	_ws = WebSocketPeer.new()
-	if mode == Mode.OFFLINE:
+	if _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		return
 
-	# In ONLINE mode, connect using JWT stored by GameManager (autoload)
-	# GameManager reads window.GODOT_JWT from the browser and keeps it in jwt_token.
+	_ws = WebSocketPeer.new()
+
 	var token := ""
 	if GameManager:
 		token = GameManager.jwt_token
 
 	if token == "":
 		push_error("[LudoNetwork] Missing jwt_token in GameManager; cannot connect to authenticated /ws")
-		mode = Mode.OFFLINE
 		return
 
-	_ws = WebSocketPeer.new()
-
-	# NOTE: Don't use Uri here (export template may not provide it).
-	# This assumes the token is safe to place in a query string.
 	var url := ws_url + "?token=" + token
-
 	print("WS URL =", url)
 
 	var err := _ws.connect_to_url(url)
-
 	print("CONNECT RESULT =", err)
 
 
 
 func _process(_delta: float) -> void:
-	if mode == Mode.OFFLINE:
+	if not is_online_mode() or _ws == null:
 		return
 
 	_ws.poll()
@@ -176,7 +173,7 @@ func _handle_message(text: String) -> void:
 func room_create(room_id: String) -> void:
 	
 	print("ROOM CREATE SENT:", room_id)
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		return
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
@@ -189,7 +186,7 @@ func room_create(room_id: String) -> void:
 
 func room_start(room_id: String) -> void:
 	print("ROOM START SENT:", room_id)
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		return
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
@@ -202,17 +199,16 @@ func room_start(room_id: String) -> void:
 
 func room_join(room_id: String) -> void:
 	print("ROOM JOIN SENT:", room_id)
-	print("JOIN MODE=", mode, " WS_READY=", _ws.get_ready_state())
 
 	# If called too early, queue it until the websocket becomes OPEN.
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		print("ROOM JOIN ABORT: not online")
 		return
 
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		print("ROOM JOIN QUEUED: ws not open yet")
 		# store pending join
-		var prev := get_meta("__pending_room_join")
+		var prev = get_meta("__pending_room_join")
 		# keep simple: override latest room_id
 		set_meta("__pending_room_join", room_id)
 		return
@@ -228,7 +224,7 @@ func room_join(room_id: String) -> void:
 
 func request_dice_roll(dice_request: Dictionary) -> void:
 	# Call this from board.gd when user presses dice in ONLINE mode.
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		return
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
@@ -244,8 +240,9 @@ func request_dice_roll(dice_request: Dictionary) -> void:
 	_ws.put_packet(JSON.stringify(msg).to_utf8_buffer())
 
 func send_token_move(player_color: String, token_index: int, steps: int) -> void:
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		return
+		
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
 
@@ -261,7 +258,7 @@ func send_token_move(player_color: String, token_index: int, steps: int) -> void
 	_ws.put_packet(JSON.stringify(msg).to_utf8_buffer())
 
 func send_turn_end() -> void:
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		return
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
@@ -276,7 +273,7 @@ func send_turn_end() -> void:
 
 func send_tokens_snapshot(tokens_by_player: Dictionary) -> void:
 	# Not used yet; for future when you want client-side prediction / validation.
-	if mode != Mode.ONLINE:
+	if not is_online_mode():
 		return
 	if _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return

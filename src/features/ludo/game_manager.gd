@@ -7,19 +7,20 @@ var player_count := 2
 var game_mode := ""
 var room_id := ""
 
+
 # Store JWT here for future REST calls
 var jwt_token: String = ""
 var local_player_color := ""
 
 # Backend health/auth test configuration
 # If your backend base url is different, adjust this.
-#@export var api_base_url: String = "http://localhost:5000/api/v1"
-@export var api_base_url: String = "https://type-metric-backend.onrender.com/api/v1"
+@export var api_base_url: String = "http://localhost:5000/api/v1"
+#@export var api_base_url: String = "https://type-metric-backend.onrender.com/api/v1"
 @export var auth_test_path: String = "/auth/me"
 
 func _ready() -> void:
-	#jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWM2MGU0YWVmODA5NjE3ZmZmYzFiOTUiLCJpYXQiOjE3ODE0NDI3NDQsImV4cCI6MTc4MjA0NzU0NH0.t_y1Lph2MF20YCC4ohuMrhj_OciroPjev1Eza11brDk"
-	jwt_token = _read_jwt_from_browser()
+	jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWM2MGU0YWVmODA5NjE3ZmZmYzFiOTUiLCJpYXQiOjE3ODE3MTIyMjMsImV4cCI6MTc4MjMxNzAyM30.Ftwe_T0UfdUVlDQjaAa3oZbnkHXO2dzvDGhFlL0vFy8"
+	#jwt_token = _read_jwt_from_browser()
 	if jwt_token != "":
 		print("[GameManager] JWT loaded. Length:", jwt_token.length())
 		# Test backend auth immediately after token is loaded

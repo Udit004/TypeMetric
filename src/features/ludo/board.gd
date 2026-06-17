@@ -80,6 +80,11 @@ func _ready():
 	if network == null:
 		push_error("NetworkManager Autoload not found!")
 
+	if GameManager.game_mode == "ONLINE":
+		mode = Mode.ONLINE
+	else:
+		mode = Mode.OFFLINE
+
 	if mode == Mode.ONLINE:
 		_init_online()
 
@@ -652,11 +657,15 @@ func update_turn_ui():
 	var is_my_turn = (mode == Mode.OFFLINE) or (current_player == GameManager.local_player_color)
 	
 	if is_my_turn:
-		dice_image.visible = true
-		roll_dice_button.visible = true
+		if dice_image:
+			dice_image.modulate.a = 1.0
+		if roll_dice_button:
+			roll_dice_button.modulate.a = 1.0
 	else:
-		dice_image.visible = false
-		roll_dice_button.visible = false
+		if dice_image:
+			dice_image.modulate.a = 0.5
+		if roll_dice_button:
+			roll_dice_button.modulate.a = 0.5
 	
 	match current_player:
 
