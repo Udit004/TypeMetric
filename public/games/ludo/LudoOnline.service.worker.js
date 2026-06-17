@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1781714641|370381263145';
+const CACHE_VERSION = '1781715883|371623337495';
 /** @type {string} */
 const CACHE_PREFIX = 'LudoOnline-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
