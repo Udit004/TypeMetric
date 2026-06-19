@@ -11,6 +11,14 @@ const START_CELLS = {
 	"YELLOW": 12
 }
 
+const DICE_HOME_PANEL_OFFSETS = {
+	"RED": Vector2(-140, 70),
+	"GREEN": Vector2(-140, -110),
+	"YELLOW": Vector2(40, -110),
+	"BLUE": Vector2(40, 70)
+}
+
+
 # ----------------------------
 # Online/Offline enum
 # ----------------------------
@@ -22,14 +30,32 @@ enum Mode { OFFLINE, ONLINE }
 @export var network_path: NodePath
 var network: Node = null
 
-@onready var turn_panel = get_parent().get_node("TurnPanel")
-@onready var ui_box = turn_panel.get_node("VBoxContainer")
+@onready var dice_panel = _find_first_existing_node([
+	"../DicePanel",
+	"../dicePanel",
+	"DicePanel",
+	"dicePanel"
+]) as Control
+@onready var dice_panel_container = _find_first_existing_node([
+	"../DicePanel/VBoxContainer",
+	"../dicePanel/VBoxContainer",
+	"DicePanel/VBoxContainer",
+	"dicePanel/VBoxContainer"
+])
+@onready var turn_label_panel = _find_first_existing_node([
+	"../TurnLabel",
+	"../LabelPanel",
+	"../labelPanel",
+	"TurnLabel",
+	"LabelPanel",
+	"labelPanel"
+]) as Control
 
-@onready var current_player_label = ui_box.get_node("CurrentPlayerLabel")
-@onready var dice_value_label = ui_box.get_node("DiceValueLabel")
-@onready var dice_image = ui_box.get_node("DiceImage")
-@onready var roll_dice_button = ui_box.get_node("RollDiceButton")
-@onready var status_label = ui_box.get_node("StatusLabel")
+@onready var current_player_label = _find_child_by_name(turn_label_panel, "CurrentPlayerLabel") as Label
+@onready var dice_value_label = _find_child_by_name(dice_panel, "DiceValueLabel") as Label
+@onready var dice_image = _find_child_by_name(dice_panel, "DiceImage")
+@onready var roll_dice_button = _find_child_by_name(dice_panel, "RollDiceButton")
+@onready var status_label = _find_child_by_name(dice_panel, "StatusLabel") as Label
 @onready var dice_audio = get_parent().get_node("DiceAudio")
 @onready var move_audio = get_parent().get_node("MoveAudio")
 
@@ -50,6 +76,59 @@ var cells = []
 
 # ONLINE mode state
 var _online_waiting_for_server: bool = false
+
+func _find_first_existing_node(paths: Array[String]) -> Node:
+	for path in paths:
+		var node = get_node_or_null(path)
+		if node != null:
+			return node
+	return null
+
+func _find_child_by_name(root: Node, child_name: String) -> Node:
+	if root == null:
+		return null
+	if root.has_node(child_name):
+		return root.get_node(child_name)
+	for child in root.get_children():
+		if child.name == child_name:
+			return child
+		var nested_child = _find_child_by_name(child, child_name)
+		if nested_child != null:
+			return nested_child
+	return null
+
+func _get_home_center(home_positions: Array) -> Vector2:
+	if home_positions.is_empty():
+		return global_position
+
+	var center := Vector2.ZERO
+	for home_position in home_positions:
+		center += home_position
+	return center / float(home_positions.size())
+
+func _set_dice_face(face_index: int) -> void:
+	if dice_image == null:
+		return
+	if face_index < 0 or face_index >= dice_faces.size():
+		return
+
+	if dice_image is TextureButton:
+		dice_image.texture_normal = dice_faces[face_index]
+	elif dice_image is TextureRect:
+		dice_image.texture = dice_faces[face_index]
+
+func _set_dice_interaction_enabled(enabled: bool) -> void:
+	var alpha := 1.0 if enabled else 0.5
+
+	if dice_image != null:
+		dice_image.modulate.a = alpha
+		if dice_image is BaseButton:
+			dice_image.disabled = not enabled
+
+	if roll_dice_button != null:
+		roll_dice_button.modulate.a = alpha
+		if roll_dice_button is BaseButton:
+			roll_dice_button.disabled = not enabled
 
 func get_selected_players() -> Array:
 	match GameManager.player_count:
@@ -179,7 +258,8 @@ func _ready():
 				"start_cell": START_CELLS[color],
 				"tokens": tokens,
 				"final_lane": final_cells,
-				"home_positions": home_positions
+				"home_positions": home_positions,
+				"ui_anchor": _get_home_center(home_positions)
 			}
 			active_turn_order.append(color)
 			print("Active player registered: ", color)
@@ -204,7 +284,18 @@ func _ready():
 				color_label.modulate = Color.DODGER_BLUE
 			"YELLOW":
 				color_label.modulate = Color.GOLD
-		ui_box.add_child(color_label)
+		if dice_panel_container != null:
+			dice_panel_container.add_child(color_label)
+		elif dice_panel != null:
+			dice_panel.add_child(color_label)
+
+	if roll_dice_button != null and roll_dice_button.has_signal("pressed"):
+		if not roll_dice_button.pressed.is_connected(_on_roll_dice_button_pressed):
+			roll_dice_button.pressed.connect(_on_roll_dice_button_pressed)
+
+	if dice_image != null and dice_image.has_signal("pressed"):
+		if not dice_image.pressed.is_connected(_on_dice_image_pressed):
+			dice_image.pressed.connect(_on_dice_image_pressed)
 
 	update_turn_ui()
 
@@ -282,8 +373,9 @@ func do_offline_dice_roll() -> void:
 	set_status("Dice is rolling")
 	await animate_dice()
 	dice_value = randi_range(1, 6)
-	dice_value_label.text = str(dice_value)
-	dice_image.texture_normal = dice_faces[dice_value - 1]
+	if dice_value_label != null:
+		dice_value_label.text = str(dice_value)
+	_set_dice_face(dice_value - 1)
 	print("Dice Rolled for ", current_player, ": ", dice_value)
 
 	# Handle consecutive sixes rule
@@ -297,7 +389,8 @@ func do_offline_dice_roll() -> void:
 			switch_turn()
 			is_processing_turn = false
 			dice_value = 0
-			dice_value_label.text = "-"
+			if dice_value_label != null:
+				dice_value_label.text = "-"
 			return
 	else:
 		consecutive_sixes = 0
@@ -309,8 +402,9 @@ func _on_online_dice_result_received(server_dice_value: int) -> void:
 	_online_waiting_for_server = false
 	is_processing_turn = false
 	dice_value = int(server_dice_value)
-	dice_value_label.text = str(dice_value)
-	dice_image.texture_normal = dice_faces[dice_value - 1]
+	if dice_value_label != null:
+		dice_value_label.text = str(dice_value)
+	_set_dice_face(dice_value - 1)
 
 	# Apply consecutive sixes rule locally
 	if dice_value == 6:
@@ -321,7 +415,8 @@ func _on_online_dice_result_received(server_dice_value: int) -> void:
 				switch_turn()
 			is_processing_turn = false
 			dice_value = 0
-			dice_value_label.text = "-"
+			if dice_value_label != null:
+				dice_value_label.text = "-"
 			return
 	else:
 		consecutive_sixes = 0
@@ -374,12 +469,13 @@ func _on_online_turn_changed(new_turn: String) -> void:
 
 func _dice_ui_reset() -> void:
 	dice_value = 0
-	dice_value_label.text = "-"
+	if dice_value_label != null:
+		dice_value_label.text = "-"
 
 func animate_dice():
 	for i in range(15):
 		var random_face = randi_range(0, 5)
-		dice_image.texture_normal = dice_faces[random_face]
+		_set_dice_face(random_face)
 		await get_tree().create_timer(0.05).timeout
 
 func calculate_valid_tokens():
@@ -414,7 +510,8 @@ func calculate_valid_tokens():
 		await get_tree().create_timer(1.0).timeout
 
 		dice_value = 0
-		dice_value_label.text = "-"
+		if dice_value_label != null:
+			dice_value_label.text = "-"
 
 		switch_turn()
 		is_processing_turn = false
@@ -500,7 +597,8 @@ func perform_move(token, is_local_action: bool = true):
 
 	# Clear local UI
 	dice_value = 0
-	dice_value_label.text = "-"
+	if dice_value_label != null:
+		dice_value_label.text = "-"
 	valid_tokens.clear()
 
 func release_token_from_home(token):
@@ -606,8 +704,9 @@ func check_win_conditions():
 				break
 		if all_completed:
 			is_game_over = true
-			current_player_label.text = color + " WINS!"
-			roll_dice_button.disabled = true
+			if current_player_label != null:
+				current_player_label.text = color + " WINS!"
+			_set_dice_interaction_enabled(false)
 			break
 
 func switch_turn():
@@ -648,44 +747,51 @@ func is_player_completed(player_color: String) -> bool:
 			return false
 	return true
 
+func update_ui_position() -> void:
+	if dice_panel == null:
+		return
+	if not players.has(current_player):
+		return
+
+	var anchor: Vector2 = players[current_player].get("ui_anchor", global_position)
+	var offset: Vector2 = DICE_HOME_PANEL_OFFSETS.get(current_player, Vector2.ZERO)
+	dice_panel.global_position = anchor + offset
+
+
 
 func update_turn_ui():
-
-	current_player_label.text = current_player + " TURN"
+	if current_player_label != null:
+		current_player_label.text = current_player + " TURN"
 	set_status("Roll Dice")
-	
-	var is_my_turn = (mode == Mode.OFFLINE) or (current_player == GameManager.local_player_color)
-	
-	if is_my_turn:
-		if dice_image:
-			dice_image.modulate.a = 1.0
-		if roll_dice_button:
-			roll_dice_button.modulate.a = 1.0
-	else:
-		if dice_image:
-			dice_image.modulate.a = 0.5
-		if roll_dice_button:
-			roll_dice_button.modulate.a = 0.5
-	
+
+	var is_my_turn = (
+		mode == Mode.OFFLINE
+		or current_player == GameManager.local_player_color
+	)
+
+	_set_dice_interaction_enabled(is_my_turn)
+
 	match current_player:
-
 		"RED":
-			current_player_label.modulate = Color.RED
-
+			if current_player_label != null:
+				current_player_label.modulate = Color.RED
 		"GREEN":
-			current_player_label.modulate = Color.GREEN
-
+			if current_player_label != null:
+				current_player_label.modulate = Color.GREEN
 		"BLUE":
-			current_player_label.modulate = Color.DODGER_BLUE
-
+			if current_player_label != null:
+				current_player_label.modulate = Color.DODGER_BLUE
 		"YELLOW":
-			current_player_label.modulate = Color.GOLD
+			if current_player_label != null:
+				current_player_label.modulate = Color.GOLD
+
+	update_ui_position()
 
 	print("UI Updated")
-
 
 func _on_dice_image_pressed() -> void:
 	roll_dice()
 	
 func set_status(message:String):
-	status_label.text = message
+	if status_label != null:
+		status_label.text = message
