@@ -50,7 +50,7 @@ export function FriendCircleSection({
               incomingRequests.map((request) => (
                 <div key={request.friendshipId} className="rounded-2xl border border-white/8 bg-slate-950/60 p-3">
                   <p className="font-semibold text-white">{request.name}</p>
-                  <p className="mt-1 text-xs text-slate-400">{request.tagline || request.email}</p>
+                  <p className="mt-1 text-xs text-slate-400">{request.tagline || "@" + request.username}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -83,7 +83,7 @@ export function FriendCircleSection({
               outgoingRequests.map((request) => (
                 <div key={request.friendshipId} className="rounded-2xl border border-white/8 bg-slate-950/60 p-3">
                   <p className="font-semibold text-white">{request.name}</p>
-                  <p className="mt-1 text-xs text-slate-400">{request.tagline || request.email}</p>
+                  <p className="mt-1 text-xs text-slate-400">{request.tagline || "@" + request.username}</p>
                   <button
                     type="button"
                     onClick={() =>

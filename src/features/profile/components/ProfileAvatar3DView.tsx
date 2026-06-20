@@ -1,10 +1,10 @@
 "use client";
 
-import { ProfileIdentity } from "../types";
+import { PublicProfileIdentity } from "../types";
 import { metric } from "./profileFormatters";
 
 interface ProfileAvatar3DViewProps {
-  profileIdentity: ProfileIdentity;
+  profileIdentity: PublicProfileIdentity;
   stats: {
     soloSessions: number;
     bestSoloWpm: number;

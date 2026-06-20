@@ -43,7 +43,7 @@ export function PlayerSearchSection({
         {results.map((result) => (
           <div key={result.id} className="rounded-2xl border border-white/8 bg-white/3 p-3">
             <p className="font-semibold text-white">{result.name}</p>
-            <p className="mt-1 text-xs text-slate-400">{result.tagline || result.email}</p>
+            <p className="mt-1 text-xs text-slate-400">{result.tagline || "@" + result.username}</p>
             <div className="mt-3">
               {result.relationshipStatus === "none" ? (
                 <button
