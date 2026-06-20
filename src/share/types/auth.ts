@@ -1,7 +1,10 @@
 export interface AuthUser {
   id: string;
   name: string;
+  displayName: string;
   email: string;
+  username: string;
+  timezone: string;
 }
 
 export interface AuthResponse {

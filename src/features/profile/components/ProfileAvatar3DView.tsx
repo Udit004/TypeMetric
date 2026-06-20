@@ -1,91 +1,7 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, useGLTF } from "@react-three/drei";
-import { Box3, Mesh, Object3D, Vector3 } from "three";
-
 import { ProfileIdentity } from "../types";
 import { metric } from "./profileFormatters";
-
-const MODEL_POOL = [
-  "/models/resultModels/avatar1.glb",
-  "/models/resultModels/avatar2.glb",
-  "/models/resultModels/avatar3.glb",
-] as const;
-
-const CAMERA_FOCUS_Y = 0.78;
-
-function hashSeed(value: string): number {
-  let hash = 0;
-
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 33 + value.charCodeAt(index)) % 2147483647;
-  }
-
-  return hash;
-}
-
-function chooseModelPath(userId: string): string {
-  const seed = hashSeed(userId || "guest");
-  const index = Math.abs(seed) % MODEL_POOL.length;
-  return MODEL_POOL[index] ?? MODEL_POOL[0];
-}
-
-function AvatarModel({ path }: { path: string }) {
-  const { scene } = useGLTF(path);
-
-  const { cloned, scale, offset } = useMemo(() => {
-    const model = scene.clone(true);
-
-    model.traverse((node: Object3D) => {
-      if (node instanceof Mesh) {
-        node.castShadow = true;
-        node.receiveShadow = true;
-      }
-    });
-
-    const box = new Box3().setFromObject(model);
-    const size = new Vector3();
-    const center = new Vector3();
-
-    box.getSize(size);
-    box.getCenter(center);
-
-    const safeHeight = Math.max(size.y, 0.001);
-    const uniformScale = 1.88 / safeHeight;
-
-    return {
-      cloned: model,
-      scale: uniformScale,
-      offset: {
-        x: -center.x * uniformScale,
-        y: -box.min.y * uniformScale,
-        z: -center.z * uniformScale,
-      },
-    };
-  }, [scene]);
-
-  return (
-    <group>
-      <mesh position={[0, -0.08, 0]} receiveShadow>
-        <cylinderGeometry args={[1.16, 1.24, 0.12, 52]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.28} roughness={0.68} />
-      </mesh>
-      <group scale={scale} position={[offset.x, offset.y + 0.02, offset.z]}>
-        <primitive object={cloned} />
-      </group>
-    </group>
-  );
-}
-
-function CameraFocus({ targetY }: { targetY: number }) {
-  useFrame(({ camera }) => {
-    camera.lookAt(0, targetY, 0);
-  });
-
-  return null;
-}
 
 interface ProfileAvatar3DViewProps {
   profileIdentity: ProfileIdentity;
@@ -115,9 +31,22 @@ function StatHudCard({ label, value, accentClass }: StatHudCardProps) {
   );
 }
 
-export function ProfileAvatar3DView({ profileIdentity, stats }: ProfileAvatar3DViewProps) {
-  const modelPath = useMemo(() => chooseModelPath(profileIdentity.id), [profileIdentity.id]);
+function AvatarFallback({ name, avatarColor }: { name: string; avatarColor: string }) {
+  const initial = (name || "?").trim().slice(0, 1).toUpperCase();
 
+  return (
+    <div
+      className="flex h-full w-full items-center justify-center rounded-full border border-white/15 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.28),rgba(2,6,23,0.82))]"
+      style={{
+        background: `radial-gradient(circle at top, rgba(34,211,238,0.28), rgba(2,6,23,0.82)), linear-gradient(135deg, ${avatarColor || "#22d3ee"}33, transparent)`,
+      }}
+    >
+      <div className="text-4xl font-black text-white/95 drop-shadow">{initial}</div>
+    </div>
+  );
+}
+
+export function ProfileAvatar3DView({ profileIdentity, stats }: ProfileAvatar3DViewProps) {
   const leftStats = [
     {
       label: "Solo Sessions",
@@ -155,20 +84,23 @@ export function ProfileAvatar3DView({ profileIdentity, stats }: ProfileAvatar3DV
   ];
 
   return (
-    <div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-cyan-300/20 bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.22),rgba(2,6,23,0.86)_55%)]">
-      <div className="relative h-136 w-full sm:h-144 lg:h-152">
-        <Canvas shadows camera={{ position: [0, 1, 3.15], fov: 50 }} dpr={[1, 1.8]}>
-          <CameraFocus targetY={CAMERA_FOCUS_Y} />
-          <ambientLight intensity={0.65} />
-          <directionalLight position={[3, 5, 3]} intensity={1.05} castShadow />
-          <pointLight position={[-2, 1.2, 2]} intensity={0.48} color="#22d3ee" distance={8} />
-          <pointLight position={[2, 1.1, 2]} intensity={0.48} color="#34d399" distance={8} />
-
-          <Suspense fallback={null}>
-            <AvatarModel path={modelPath} />
-            <Environment preset="city" />
-          </Suspense>
-        </Canvas>
+    <div className="w-full max-w-3xl overflow-hidden">
+      <div className="relative flex h-136 w-full flex-col items-center justify-center sm:h-144 lg:h-152">
+        <div className="relative z-10 flex h-64 w-64 items-center justify-center sm:h-72 sm:w-72">
+          <div className="absolute -inset-3 rounded-full bg-gradient-to-tr from-cyan-300/35 via-emerald-300/20 to-cyan-300/0 blur-xl" />
+          <div className="relative flex h-full w-full items-center justify-center rounded-full overflow-hidden border border-white/15 bg-slate-950/20">
+            {profileIdentity.avatarImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profileIdentity.avatarImageUrl}
+                alt={`${profileIdentity.username} avatar`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <AvatarFallback name={profileIdentity.displayName || profileIdentity.name} avatarColor={profileIdentity.avatarColor} />
+            )}
+          </div>
+        </div>
 
         <div className="pointer-events-none absolute inset-3 hidden items-center justify-between gap-4 lg:flex">
           <div className="w-full max-w-52 space-y-3">
@@ -213,7 +145,3 @@ export function ProfileAvatar3DView({ profileIdentity, stats }: ProfileAvatar3DV
     </div>
   );
 }
-
-useGLTF.preload(MODEL_POOL[0]);
-useGLTF.preload(MODEL_POOL[1]);
-useGLTF.preload(MODEL_POOL[2]);

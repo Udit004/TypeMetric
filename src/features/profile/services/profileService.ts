@@ -2,7 +2,8 @@ import axios from "axios";
 
 import { api } from "@/share/servies/api";
 import {
-  ProfileDashboard,
+  PrivateProfileDashboard,
+  PublicProfileView,
   ProfileIdentity,
   SearchUserResult,
 } from "../types";
@@ -23,9 +24,9 @@ function buildAuthHeaders(token: string) {
   };
 }
 
-export async function getMyProfileApi(token: string): Promise<ProfileDashboard> {
+export async function getMyProfileApi(token: string): Promise<PrivateProfileDashboard> {
   try {
-    const { data } = await api.get<ProfileDashboard>(
+    const { data } = await api.get<PrivateProfileDashboard>(
       "/profile/me",
       buildAuthHeaders(token)
     );
@@ -43,6 +44,41 @@ export async function updateMyProfileApi(
     const { data } = await api.patch<{ profile: ProfileIdentity }>(
       "/profile/me",
       payload,
+      buildAuthHeaders(token)
+    );
+    return data.profile;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+}
+
+export async function checkMyUsernameAvailabilityApi(
+  username: string,
+  token: string
+): Promise<{ available: boolean }> {
+  try {
+    const { data } = await api.get<{ available: boolean }>(
+      "/profile/me/username/availability",
+      {
+        ...buildAuthHeaders(token),
+        params: { username },
+      }
+    );
+    return data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+}
+
+export async function updateMyUsernameApi(
+  username: string,
+  token: string
+): Promise<ProfileIdentity> {
+
+  try {
+    const { data } = await api.patch<{ profile: ProfileIdentity }>(
+      "/profile/me/username",
+      { username },
       buildAuthHeaders(token)
     );
     return data.profile;
@@ -116,6 +152,31 @@ export async function removeFriendApi(
 ): Promise<void> {
   try {
     await api.delete(`/profile/friends/${friendUserId}`, buildAuthHeaders(token));
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+}
+
+export async function getPublicProfileApi(username: string): Promise<PublicProfileView> {
+  try {
+    const { data } = await api.get<PublicProfileView>(`/profile/${username}`);
+    return data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+}
+
+export async function uploadMyAvatarApi(file: File, token: string): Promise<void> {
+  try {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    await api.post("/profile/me/avatar", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
   } catch (error) {
     throw new Error(getApiErrorMessage(error));
   }

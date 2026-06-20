@@ -12,17 +12,20 @@ import {
   searchProfileUsersApi,
   sendFriendRequestApi,
   updateMyProfileApi,
+  updateMyUsernameApi,
 } from "../services/profileService";
-import { ProfileDashboard, ProfileIdentity, SearchUserResult } from "../types";
+import { PrivateProfileDashboard, ProfileIdentity, SearchUserResult } from "../types";
 import { FriendCircleSection } from "../components/FriendCircleSection";
 import { PlayerSearchSection } from "../components/PlayerSearchSection";
 import { ProfileIdentitySection } from "../components/ProfileIdentitySection";
 import { RecentRacesSection } from "../components/RecentRacesSection";
 import { RecentTypingSessionsSection } from "../components/RecentTypingSessionsSection";
+import { ActivityGridSection } from "../components/ActivityGridSection";
+import { BadgeCollectionSection } from "../components/BadgeCollectionSection";
 
 export function ProfilePageClient() {
   const { token } = useAuth();
-  const [profile, setProfile] = useState<ProfileDashboard | null>(null);
+  const [profile, setProfile] = useState<PrivateProfileDashboard | null>(null);
   const [formState, setFormState] = useState<ProfileIdentity | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
@@ -133,9 +136,22 @@ export function ProfilePageClient() {
 
     setIsSaving(true);
     try {
-      const updated = await updateMyProfileApi(formState, token);
-      setFormState(updated);
-      setProfile((current) => (current ? { ...current, profile: updated } : current));
+      const updatedIdentity = await updateMyProfileApi(formState, token);
+
+      if (formState.username !== profile?.profile.username) {
+        const renamedProfile = await updateMyUsernameApi(formState.username, token);
+        setFormState({ ...updatedIdentity, username: renamedProfile.username });
+        setProfile((current) =>
+          current
+            ? { ...current, profile: { ...updatedIdentity, username: renamedProfile.username } }
+            : current
+        );
+      } else {
+        setFormState(updatedIdentity);
+        setProfile((current) => (current ? { ...current, profile: updatedIdentity } : current));
+      }
+
+      await loadProfile(token, { silent: true });
       setStatus("Profile updated.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to update profile");
@@ -172,6 +188,15 @@ export function ProfilePageClient() {
               onSave={handleSave}
               isSaving={isSaving}
             />
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <ActivityGridSection
+              title="Consistency Grid"
+              subtitle="Your recent typing and racing activity"
+              activities={profile.activityGrid}
+            />
+            <BadgeCollectionSection badges={profile.badges} />
           </section>
 
           <section className="grid gap-6 xl:grid-cols-2">
