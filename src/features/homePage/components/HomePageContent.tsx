@@ -10,7 +10,7 @@ export function HomePageContent() {
       <BackgroundParticles />
 
       {/* Hero and Demo Side by Side */}
-      <div className="relative z-10 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-16 mb-38">
+      <div className="relative z-10 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-6  md:mt-16 mb-38">
         <HeroSection />
         <HomeDemoSection />
       </div>
