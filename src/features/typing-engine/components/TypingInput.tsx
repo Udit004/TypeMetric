@@ -16,6 +16,7 @@ import type { CompletionReason, SaveTypingSessionPayload } from "../types/typing
 import { TextRenderer } from "./TextRenderer";
 import { TypingStats } from "./TypingStats";
 import { RunnerGame } from "./RunnerGame";
+import { VirtualKeyboard } from "./VirtualKeyboard";
 import { useAuth } from "@/share/hooks/useAuth";
 
 interface TypingInputProps {
@@ -36,6 +37,7 @@ export function TypingInput({
   );
   const resolvedText = hasCustomText ? text : activeText;
   const [hasSavedCurrentSession, setHasSavedCurrentSession] = useState(false);
+  const [difficulty, setDifficulty] = useState("Easy");
 
   const { elapsedMs, isFinished, startTimer, resetTimer } = useTimer({
     durationSeconds,
@@ -57,6 +59,7 @@ export function TypingInput({
 
   const isTextCompleted = currentIndex >= parsedText.length;
   const isSessionCompleted = isFinished || isTextCompleted;
+  const isSessionActive = typedCharacters.length > 0 && !isSessionCompleted;
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -213,6 +216,38 @@ export function TypingInput({
 
       <div className="pointer-events-none absolute inset-0 z-1 bg-slate-950/35" />
 
+      {/* Top Bar with Difficulty Dropdown and Visual Progress */}
+      <div className={`relative z-10 flex items-center justify-between px-2 pt-2 ${isFullscreen ? "mx-auto w-full max-w-6xl" : ""}`}>
+        <div className="relative">
+          <select 
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+            disabled={isSessionActive}
+            aria-label="Select difficulty"
+            className="appearance-none bg-transparent text-slate-200 font-semibold text-sm outline-none pr-6 cursor-pointer disabled:opacity-50"
+          >
+            <option value="Easy" className="bg-slate-900">Easy</option>
+            <option value="Medium" className="bg-slate-900">Medium</option>
+            <option value="Hard" className="bg-slate-900">Hard</option>
+          </select>
+          <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </div>
+        
+        <div className="flex gap-1.5 ml-4 sm:ml-0">
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
+          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
+        </div>
+        
+        <div className="text-xs sm:text-sm font-semibold text-slate-400 tracking-wider">
+          1 / 10
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={handleToggleFullscreen}
@@ -242,6 +277,10 @@ export function TypingInput({
           mistakes={mistakes}
           elapsedMs={elapsedMs}
         />
+      </div>
+
+      <div className={`relative z-10 mt-4 ${isFullscreen ? "mx-auto w-full max-w-6xl" : ""}`}>
+        <VirtualKeyboard />
       </div>
     </section>
   );
