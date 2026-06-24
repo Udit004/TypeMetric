@@ -273,6 +273,8 @@ export function TypingInput({
             typedCharactersCount={typedCharacters.length}
             correctCharacters={correctCharacters}
             history={history}
+            text={resolvedText}
+            typedCharacters={typedCharacters}
             onRestart={handleReset}
           />
         </div>

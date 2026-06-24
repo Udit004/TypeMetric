@@ -43,6 +43,8 @@ interface TypingResultsProps {
     accuracy: number[];
     mistakes: number[];
   };
+  text: string;
+  typedCharacters: string[];
   onRestart: () => void;
 }
 
@@ -58,6 +60,8 @@ export function TypingResults({
   typedCharactersCount,
   correctCharacters,
   history,
+  text,
+  typedCharacters,
   onRestart,
 }: TypingResultsProps) {
   const formatTime = (ms: number) => {
@@ -89,17 +93,39 @@ export function TypingResults({
   const correctionRate = totalKeystrokes > 0 ? (correctedErrors / totalKeystrokes) * 100 : 0;
 
   const lineChartData = {
-    labels: history.wpm.map((_, i) => `${i}s`),
+    labels: history.wpm.map((_, i) => `${(i * 0.5).toFixed(1)}s`),
     datasets: [
       {
         fill: true,
-        label: "WPM",
+        label: "Net WPM",
         data: history.wpm,
         borderColor: "#14b8a6", // teal-500
         backgroundColor: "rgba(20, 184, 166, 0.1)",
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 6,
+        yAxisID: "y",
+      },
+      {
+        fill: false,
+        label: "Raw WPM",
+        data: history.rawWpm,
+        borderColor: "#64748b", // slate-500
+        borderDash: [5, 5],
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        yAxisID: "y",
+      },
+      {
+        fill: false,
+        label: "Errors",
+        data: history.mistakes,
+        borderColor: "#fb7185", // rose-400
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        yAxisID: "y1",
       },
     ],
   };
@@ -108,7 +134,14 @@ export function TypingResults({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: { 
+        display: true,
+        labels: {
+          color: "#94a3b8",
+          usePointStyle: true,
+          boxWidth: 8
+        }
+      },
       tooltip: {
         mode: "index" as const,
         intersect: false,
@@ -118,30 +151,39 @@ export function TypingResults({
         borderColor: "rgba(56, 189, 248, 0.2)",
         borderWidth: 1,
         padding: 10,
-        callbacks: {
-          label: (context: any) => `${context.parsed.y} WPM`,
-        },
       },
     },
     scales: {
       y: {
+        type: 'linear' as const,
+        display: true,
+        position: 'left' as const,
         beginAtZero: true,
         grid: {
           color: "rgba(51, 65, 85, 0.2)", // slate-700
         },
         ticks: { color: "#64748b" }, // slate-500
       },
+      y1: {
+        type: 'linear' as const,
+        display: true,
+        position: 'right' as const,
+        beginAtZero: true,
+        grid: {
+          drawOnChartArea: false, // only want the grid lines for one axis to show up
+        },
+        ticks: { color: "#fb7185" }, // rose-400
+      },
       x: {
         grid: { display: false },
         ticks: {
           color: "#64748b",
-          maxTicksLimit: 6,
+          maxTicksLimit: 8,
         },
       },
     },
     interaction: {
-      mode: "nearest" as const,
-      axis: "x" as const,
+      mode: "index" as const,
       intersect: false,
     },
   };
@@ -371,6 +413,38 @@ export function TypingResults({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Text Review Section */}
+      <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-6 mt-4">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">TEXT REVIEW</div>
+        <div className="font-mono text-lg leading-relaxed tracking-wide break-words">
+          {text.split('').map((char, index) => {
+            const isTyped = index < typedCharacters.length;
+            const typedChar = isTyped ? typedCharacters[index] : null;
+            const isCorrect = isTyped && typedChar === char;
+            const isWrong = isTyped && typedChar !== char;
+
+            let colorClass = "text-slate-400"; // not typed/skipped
+            let displayChar = char;
+
+            if (isCorrect) {
+              colorClass = "text-emerald-400";
+            } else if (isWrong) {
+              colorClass = "text-rose-400 bg-rose-500/20 rounded-sm";
+              // If they typed a space where there's a char, show it clearly
+              if (typedChar === ' ') displayChar = char; 
+              // If they typed a wrong char, maybe show what they typed? 
+              // The screenshot usually just colors the original text red.
+            }
+
+            return (
+              <span key={index} className={colorClass}>
+                {displayChar}
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>
