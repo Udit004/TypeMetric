@@ -4,4 +4,6 @@ export interface TypingState {
   currentIndex: number;
   mistakes: number;
   typedCharacters: string[];
+  totalKeystrokes: number;
+  totalErrors: number;
 }

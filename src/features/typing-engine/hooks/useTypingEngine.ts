@@ -30,7 +30,9 @@ export function useTypingEngine(
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [typedCharacters, setTypedCharacters] = useState<string[]>([]);
-  const [mistakes, setMistakes] = useState(0);
+  const [mistakes, setMistakes] = useState(0); // Uncorrected errors
+  const [totalKeystrokes, setTotalKeystrokes] = useState(0);
+  const [totalErrors, setTotalErrors] = useState(0);
 
   const recalculateMistakes = useCallback(
     (nextTyped: string[]) => {
@@ -73,6 +75,12 @@ export function useTypingEngine(
 
         const nextTyped = [...previousTyped, typedChar];
         setCurrentIndex(nextTyped.length);
+        
+        const isError = !isCharacterCorrect(typedChar, targetCharacters[previousTyped.length] ?? "");
+        if (isError) {
+          setTotalErrors((prev) => prev + 1);
+        }
+
         setMistakes(recalculateMistakes(nextTyped));
 
         // TODO: Add support for custom word-boundary and punctuation rules.
@@ -95,6 +103,7 @@ export function useTypingEngine(
       }
 
       event.preventDefault();
+      setTotalKeystrokes((prev) => prev + 1);
       handleTypedCharacter(event.key);
     },
     [handleBackspace, handleTypedCharacter]
@@ -104,12 +113,16 @@ export function useTypingEngine(
     setCurrentIndex(0);
     setTypedCharacters([]);
     setMistakes(0);
+    setTotalKeystrokes(0);
+    setTotalErrors(0);
   }, []);
 
   return {
     currentIndex,
     mistakes,
     typedCharacters,
+    totalKeystrokes,
+    totalErrors,
     handleKeyDown,
     resetTyping,
   };

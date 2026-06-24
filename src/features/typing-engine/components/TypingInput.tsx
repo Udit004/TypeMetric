@@ -8,7 +8,7 @@ import {
 } from "../constants/typingConfig";
 import { useTimer } from "../hooks/useTimer";
 import { useTypingEngine } from "../hooks/useTypingEngine";
-import { calculateAccuracy, calculateWPM } from "../lib/metrics";
+import { calculateAccuracy, calculateWPM, calculateRawWPM, calculateNetWPM } from "../lib/metrics";
 import { parseTextToCharacters } from "../lib/textParser";
 import { isCharacterCorrect } from "../lib/validation";
 import { saveTypingSessionApi } from "../services/typingSessionService";
@@ -18,6 +18,7 @@ import { TypingStats } from "./TypingStats";
 import { RunnerGame } from "./RunnerGame";
 import { VirtualKeyboard } from "./VirtualKeyboard";
 import { useAuth } from "@/share/hooks/useAuth";
+import { TypingResults } from "./TypingResults";
 
 interface TypingInputProps {
   text?: string;
@@ -43,7 +44,7 @@ export function TypingInput({
     durationSeconds,
   });
 
-  const { currentIndex, mistakes, typedCharacters, handleKeyDown, resetTyping } =
+  const { currentIndex, mistakes, typedCharacters, totalKeystrokes, totalErrors, handleKeyDown, resetTyping } =
     useTypingEngine(resolvedText, {
       onFirstInput: startTimer,
     });
@@ -60,6 +61,52 @@ export function TypingInput({
   const isTextCompleted = currentIndex >= parsedText.length;
   const isSessionCompleted = isFinished || isTextCompleted;
   const isSessionActive = typedCharacters.length > 0 && !isSessionCompleted;
+
+  const currentRawWpm = useMemo(
+    () => calculateRawWPM(totalKeystrokes, elapsedMs),
+    [elapsedMs, totalKeystrokes]
+  );
+  
+  const currentNetWpm = useMemo(
+    () => calculateNetWPM(currentRawWpm, mistakes, elapsedMs),
+    [currentRawWpm, mistakes, elapsedMs]
+  );
+  
+  // Backwards compatibility for old wpm display (now maps to Net WPM usually)
+  const currentWpm = currentNetWpm;
+
+  const currentAccuracy = useMemo(
+    () => calculateAccuracy(correctCharacters, typedCharacters.length),
+    [correctCharacters, typedCharacters.length]
+  );
+
+  const [history, setHistory] = useState({
+    wpm: [] as number[],
+    rawWpm: [] as number[],
+    accuracy: [] as number[],
+    mistakes: [] as number[],
+  });
+
+  const lastUpdateRef = useRef(0);
+
+  useEffect(() => {
+    if (elapsedMs === 0) {
+      setHistory({ wpm: [0], rawWpm: [0], accuracy: [100], mistakes: [0] });
+      lastUpdateRef.current = 0;
+      return;
+    }
+    
+    // Update graph every ~500ms
+    if (elapsedMs - lastUpdateRef.current >= 500) {
+      setHistory(prev => ({
+        wpm: [...prev.wpm, currentNetWpm],
+        rawWpm: [...prev.rawWpm, currentRawWpm],
+        accuracy: [...prev.accuracy, currentAccuracy],
+        mistakes: [...prev.mistakes, mistakes],
+      }));
+      lastUpdateRef.current = elapsedMs;
+    }
+  }, [elapsedMs, currentNetWpm, currentRawWpm, currentAccuracy, mistakes]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -150,7 +197,7 @@ export function TypingInput({
         correctCharacters,
         mistakes,
         accuracy: calculateAccuracy(correctCharacters, typedCharacters.length),
-        wpm: calculateWPM(typedCharacters.length, elapsedMs),
+        wpm: currentNetWpm,
         elapsedMs,
         durationSeconds,
         completionReason,
@@ -186,15 +233,52 @@ export function TypingInput({
     }
 
     setHasSavedCurrentSession(false);
+    setHistory({ wpm: [0], rawWpm: [0], accuracy: [100], mistakes: [0] });
+    lastUpdateRef.current = 0;
     resetTyping();
     resetTimer();
   };
 
-  // Calculate current WPM
-  const currentWpm = useMemo(
-    () => calculateWPM(typedCharacters.length, elapsedMs),
-    [elapsedMs, typedCharacters.length]
-  );
+  if (isSessionCompleted) {
+    return (
+      <section
+        ref={panelRef}
+        aria-label="Typing engine results"
+        className={`relative flex min-h-136 flex-col overflow-hidden rounded-[1.4rem] bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:min-h-144 sm:p-6 ${
+          isFullscreen
+            ? "fixed inset-0 z-50 h-screen overflow-y-auto rounded-none p-4 sm:p-6 lg:p-8"
+            : ""
+        }`}
+      >
+        <div className="pointer-events-none absolute inset-0 z-1 bg-slate-950/35" />
+        
+        <button
+          type="button"
+          onClick={handleToggleFullscreen}
+          className="absolute right-4 top-4 z-20 rounded-full border border-white/15 bg-slate-950/80 px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-slate-900"
+        >
+          {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+        </button>
+
+        <div className="relative z-10 w-full h-full flex flex-col">
+          <TypingResults
+            wpm={currentNetWpm}
+            rawWpm={currentRawWpm}
+            accuracy={currentAccuracy}
+            mistakes={mistakes}
+            totalKeystrokes={totalKeystrokes}
+            totalErrors={totalErrors}
+            elapsedMs={elapsedMs}
+            totalCharacters={parsedText.length}
+            typedCharactersCount={typedCharacters.length}
+            correctCharacters={correctCharacters}
+            history={history}
+            onRestart={handleReset}
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -256,31 +340,38 @@ export function TypingInput({
         {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
       </button>
 
-      <div className={`relative z-10 ${isFullscreen ? "mx-auto w-full max-w-6xl pt-10" : ""}`}>
-        <TextRenderer
-          text={resolvedText}
-          typedCharacters={typedCharacters}
-          currentIndex={currentIndex}
-          isFinished={isFinished}
-          onRestart={handleReset}
-        />
-      </div>
+      <div className={`relative z-10 flex flex-col lg:flex-row gap-8 w-full ${isFullscreen ? "mx-auto max-w-7xl pt-10" : "mt-6"}`}>
+        <aside className="w-full lg:w-72 flex-shrink-0">
+          <TypingStats
+            text={resolvedText}
+            typedCharacters={typedCharacters}
+            mistakes={mistakes}
+            elapsedMs={elapsedMs}
+            durationSeconds={durationSeconds}
+            history={{
+              wpm: history.wpm.slice(-40),
+              rawWpm: history.rawWpm.slice(-40),
+              accuracy: history.accuracy.slice(-40),
+              mistakes: history.mistakes.slice(-40),
+            }}
+          />
+        </aside>
 
-      <p className={`relative z-10 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 ${isFullscreen ? "text-center" : ""}`}>
-        Press any key to start typing
-      </p>
+        <main className="flex-1 flex flex-col min-w-0 max-w-5xl">
+          <TextRenderer
+            text={resolvedText}
+            typedCharacters={typedCharacters}
+            currentIndex={currentIndex}
+            isFinished={isFinished}
+            onRestart={handleReset}
+          />
 
-      <div className={`relative z-10 ${isFullscreen ? "mx-auto w-full max-w-6xl" : ""}`}>
-        <TypingStats
-          text={resolvedText}
-          typedCharacters={typedCharacters}
-          mistakes={mistakes}
-          elapsedMs={elapsedMs}
-        />
-      </div>
+          <p className="mt-8 mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 text-center">
+            Press any key to start typing
+          </p>
 
-      <div className={`relative z-10 mt-4 ${isFullscreen ? "mx-auto w-full max-w-6xl" : ""}`}>
-        <VirtualKeyboard />
+          <VirtualKeyboard />
+        </main>
       </div>
     </section>
   );
