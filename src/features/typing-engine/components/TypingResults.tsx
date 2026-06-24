@@ -45,6 +45,7 @@ interface TypingResultsProps {
   };
   text: string;
   typedCharacters: string[];
+  previousSession?: { wpm: number; accuracy: number } | null;
   onRestart: () => void;
 }
 
@@ -62,6 +63,7 @@ export function TypingResults({
   history,
   text,
   typedCharacters,
+  previousSession,
   onRestart,
 }: TypingResultsProps) {
   const formatTime = (ms: number) => {
@@ -91,6 +93,9 @@ export function TypingResults({
   const correctedErrors = totalErrors - mistakes;
   const uncorrectedErrors = mistakes;
   const correctionRate = totalKeystrokes > 0 ? (correctedErrors / totalKeystrokes) * 100 : 0;
+
+  const wpmDiff = previousSession ? wpm - previousSession.wpm : null;
+  const accuracyDiff = previousSession ? accuracy - previousSession.accuracy : null;
 
   const lineChartData = {
     labels: history.wpm.map((_, i) => `${(i * 0.5).toFixed(1)}s`),
@@ -251,6 +256,16 @@ export function TypingResults({
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1 z-10">NET WPM</div>
           <div className="flex items-baseline gap-2 z-10">
             <div className="text-4xl font-bold text-white">{Math.round(wpm)}</div>
+            {wpmDiff !== null && (
+              <div className={`text-xs font-bold flex items-center ${wpmDiff >= 0 ? "text-teal-400" : "text-rose-400"}`}>
+                <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {wpmDiff >= 0 
+                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />}
+                </svg>
+                {Math.abs(Math.round(wpmDiff))}
+              </div>
+            )}
           </div>
           <div className="text-xs text-slate-400 mt-1 z-10">Raw WPM: {Math.round(rawWpm)}</div>
         </div>
@@ -263,10 +278,16 @@ export function TypingResults({
           <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">ACCURACY</div>
           <div className="flex items-baseline gap-2">
             <div className="text-4xl font-bold text-white">{Math.round(accuracy)}%</div>
-            <div className="text-xs font-bold text-teal-400 flex items-center">
-              <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-              8%
-            </div>
+            {accuracyDiff !== null && (
+              <div className={`text-xs font-bold flex items-center ${accuracyDiff >= 0 ? "text-teal-400" : "text-rose-400"}`}>
+                <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {accuracyDiff >= 0 
+                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />}
+                </svg>
+                {Math.abs(Math.round(accuracyDiff))}%
+              </div>
+            )}
           </div>
           <div className="text-xs text-slate-400 mt-1">Total Accuracy</div>
         </div>

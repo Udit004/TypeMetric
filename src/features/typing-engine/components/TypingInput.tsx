@@ -86,6 +86,11 @@ export function TypingInput({
     accuracy: [] as number[],
     mistakes: [] as number[],
   });
+  
+  const [previousSession, setPreviousSession] = useState<{
+    wpm: number;
+    accuracy: number;
+  } | null>(null);
 
   const lastUpdateRef = useRef(0);
 
@@ -202,29 +207,64 @@ export function TypingInput({
         durationSeconds,
         completionReason,
       };
-
       try {
-        await saveTypingSessionApi(payload, token);
-        setHasSavedCurrentSession(true);
-      } catch (error) {
-        console.error("Failed to save typing session", error);
+        const lastSessionStr = localStorage.getItem("typemetric_last_session");
+        if (lastSessionStr) {
+          setPreviousSession(JSON.parse(lastSessionStr));
+        }
+        localStorage.setItem("typemetric_last_session", JSON.stringify({
+          wpm: currentNetWpm,
+          accuracy: currentAccuracy
+        }));
+      } catch (e) {
+        console.error("Local storage error:", e);
+      }
+
+      setHasSavedCurrentSession(true);
+
+      if (isAuthenticated && token) {
+        const completionReason: CompletionReason = isFinished
+          ? "time_up"
+          : "text_completed";
+
+        const payload: SaveTypingSessionPayload = {
+          promptText: resolvedText,
+          typedText: typedCharacters.join(""),
+          totalCharacters: parsedText.length,
+          typedCharactersCount: typedCharacters.length,
+          correctCharacters,
+          mistakes,
+          accuracy: currentAccuracy,
+          wpm: currentNetWpm,
+          elapsedMs,
+          durationSeconds,
+          completionReason,
+        };
+
+        try {
+          await saveTypingSessionApi(payload, token);
+        } catch (error) {
+          console.error("Failed to save typing session:", error);
+        }
       }
     };
 
-    void saveSession();
+    saveSession();
   }, [
-    correctCharacters,
-    durationSeconds,
-    elapsedMs,
+    isSessionCompleted,
     hasSavedCurrentSession,
     isAuthenticated,
-    isFinished,
-    isSessionCompleted,
-    mistakes,
-    parsedText.length,
-    resolvedText,
     token,
+    resolvedText,
     typedCharacters,
+    correctCharacters,
+    mistakes,
+    elapsedMs,
+    durationSeconds,
+    isFinished,
+    parsedText.length,
+    currentNetWpm,
+    currentAccuracy
   ]);
 
   const handleReset = () => {
@@ -275,6 +315,7 @@ export function TypingInput({
             history={history}
             text={resolvedText}
             typedCharacters={typedCharacters}
+            previousSession={previousSession}
             onRestart={handleReset}
           />
         </div>
