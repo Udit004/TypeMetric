@@ -16,7 +16,6 @@ import type { CompletionReason, SaveTypingSessionPayload } from "../types/typing
 import { TextRenderer } from "./TextRenderer";
 import { TypingStats } from "./TypingStats";
 import { RunnerGame } from "./RunnerGame";
-import { VirtualKeyboard } from "./VirtualKeyboard";
 import { useAuth } from "@/share/hooks/useAuth";
 import { TypingResults } from "./TypingResults";
 
@@ -383,8 +382,23 @@ export function TypingInput({
         {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
       </button>
 
-      <div className={`relative z-10 flex flex-col lg:flex-row gap-8 w-full ${isFullscreen ? "mx-auto max-w-7xl pt-10" : "mt-6"}`}>
-        <aside className="w-full lg:w-72 flex-shrink-0">
+      <div className={`relative z-10 flex flex-row gap-8 w-full ${isFullscreen ? "pt-10" : "mt-6"}`}>
+        
+          
+  
+
+        <main className="flex-1 flex flex-col min-w-0">
+          <TextRenderer
+            text={resolvedText}
+            typedCharacters={typedCharacters}
+            currentIndex={currentIndex}
+            isFinished={isFinished}
+            onRestart={handleReset}
+          />
+
+          <p className="mt-8 mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 text-center">
+            Press any key to start typing
+          </p>
           <TypingStats
             text={resolvedText}
             typedCharacters={typedCharacters}
@@ -398,22 +412,6 @@ export function TypingInput({
               mistakes: history.mistakes.slice(-40),
             }}
           />
-        </aside>
-
-        <main className="flex-1 flex flex-col min-w-0 max-w-5xl">
-          <TextRenderer
-            text={resolvedText}
-            typedCharacters={typedCharacters}
-            currentIndex={currentIndex}
-            isFinished={isFinished}
-            onRestart={handleReset}
-          />
-
-          <p className="mt-8 mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 text-center">
-            Press any key to start typing
-          </p>
-
-          <VirtualKeyboard />
         </main>
       </div>
     </section>

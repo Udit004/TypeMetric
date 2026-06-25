@@ -36,23 +36,49 @@ interface TypingStatsProps {
   };
 }
 
-function StatRow({ label, value, color, data }: { label: string, value: string | number, color: 'emerald' | 'rose', data: number[] }) {
-  const isEmerald = color === 'emerald';
-  const strokeColor = isEmerald ? '#34d399' : '#fb7185';
-  const bgColor = isEmerald ? 'rgba(52, 211, 153, 0.2)' : 'rgba(251, 113, 133, 0.2)';
+function StatCard({
+  label,
+  value,
+  color,
+  data,
+}: {
+  label: string;
+  value: string | number;
+  color: "emerald" | "sky" | "rose";
+  data: number[];
+}) {
+  const colorMap = {
+    emerald: {
+      stroke: "#34d399",
+      bg: "rgba(52,211,153,0.12)",
+      grad: "from-emerald-500/10",
+    },
+    sky: {
+      stroke: "#38bdf8",
+      bg: "rgba(56,189,248,0.12)",
+      grad: "from-sky-500/10",
+    },
+    rose: {
+      stroke: "#fb7185",
+      bg: "rgba(251,113,133,0.12)",
+      grad: "from-rose-500/10",
+    },
+  };
+
+  const theme = colorMap[color];
 
   const chartData = {
     labels: data.map((_, i) => i),
     datasets: [
       {
+        data,
         fill: true,
-        data: data,
-        borderColor: strokeColor,
-        backgroundColor: bgColor,
+        borderColor: theme.stroke,
+        backgroundColor: theme.bg,
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 0,
-        tension: 0.4,
+        tension: 0.35,
       },
     ],
   };
@@ -60,29 +86,42 @@ function StatRow({ label, value, color, data }: { label: string, value: string |
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false as const,
     plugins: {
       legend: { display: false },
       tooltip: { enabled: false },
     },
+    interaction: {
+      mode: "index" as const,
+      intersect: false,
+    },
     scales: {
       x: { display: false },
-      y: { display: false, beginAtZero: true },
-    },
-    animation: {
-      duration: 0 // disable animations for the tiny sparkline to save CPU and look snappier
-    },
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
+      y: {
+        display: false,
+        beginAtZero: true,
+      },
     },
   };
 
   return (
-    <div>
-      <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">{label}</div>
-      <div className="flex items-center justify-between">
-        <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
-        <div className="w-20 h-10 relative flex-shrink-0">
+    <div className="relative flex-1 min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-5 group hover:bg-slate-800/60 transition-all duration-300">
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${theme.grad} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}
+      />
+
+      <div className="relative flex h-full items-center justify-between">
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.22em] font-bold text-slate-500">
+            {label}
+          </p>
+
+          <h2 className="mt-1 text-3xl lg:text-4xl font-black tracking-tight text-white tabular-nums">
+            {value}
+          </h2>
+        </div>
+
+        <div className="w-20 lg:w-24 h-12 flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
           <Line data={chartData} options={options} />
         </div>
       </div>
@@ -103,50 +142,136 @@ export function TypingStats({
   const correctCharacters = useMemo(
     () =>
       typedCharacters.reduce((count, typedChar, index) => {
-        return isCharacterCorrect(typedChar, parsedText[index] ?? "") ? count + 1 : count;
+        return isCharacterCorrect(
+          typedChar,
+          parsedText[index] ?? ""
+        )
+          ? count + 1
+          : count;
       }, 0),
-    [parsedText, typedCharacters]
+    [typedCharacters, parsedText]
   );
 
-  const wpm = useMemo(() => calculateWPM(typedCharacters.length, elapsedMs), [elapsedMs, typedCharacters.length]);
+  const wpm = useMemo(
+    () => calculateWPM(typedCharacters.length, elapsedMs),
+    [typedCharacters.length, elapsedMs]
+  );
+
   const accuracy = useMemo(
-    () => calculateAccuracy(correctCharacters, typedCharacters.length),
+    () =>
+      calculateAccuracy(
+        correctCharacters,
+        typedCharacters.length
+      ),
     [correctCharacters, typedCharacters.length]
   );
 
-  const timeLeft = Math.max(0, durationSeconds - Math.floor(elapsedMs / 1000));
+  const timeLeft = Math.max(
+    0,
+    durationSeconds - Math.floor(elapsedMs / 1000)
+  );
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+
+    return `${m.toString().padStart(2, "0")}:${s
+      .toString()
+      .padStart(2, "0")}`;
   };
+
+  const progressPercent = Math.min(
+    100,
+    (typedCharacters.length / Math.max(parsedText.length, 1)) * 100
+  );
 
   return (
     <section
       aria-label="Typing statistics"
-      className="flex flex-col rounded-2xl border border-sky-200/10 bg-slate-900/65 p-6 shadow-lg shadow-slate-950/35 backdrop-blur-md w-full space-y-6"
+      className="flex flex-col lg:flex-row gap-4 w-full items-stretch"
     >
-      <div>
-        <div className="flex items-center text-xs font-semibold uppercase tracking-widest text-teal-500/80 mb-2">
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {/* TIME */}
+
+      <div className="relative lg:flex-[1.3] flex-1 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-6 shadow-xl">
+
+        <div className="absolute top-0 right-0 p-8 opacity-20">
+          <svg
+            className="w-24 h-24 text-teal-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeWidth={1}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
-          TIME LEFT
         </div>
-        <div className="text-4xl font-bold text-white tracking-tight">
-          {formatTime(timeLeft)}
+
+        <div className="relative flex flex-col justify-center h-full">
+          <p className="text-[11px] uppercase tracking-[0.22em] font-bold text-teal-400">
+            TIME LEFT
+          </p>
+
+          <h1 className="mt-2 text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-black tracking-tight text-white tabular-nums">
+            {formatTime(timeLeft)}
+          </h1>
         </div>
       </div>
 
-      <div className="h-px w-full bg-slate-800/50" />
+      <StatCard
+        label="WPM"
+        value={Math.round(wpm)}
+        data={history.wpm}
+        color="emerald"
+      />
 
-      <StatRow label="WPM" value={Math.round(wpm)} color="emerald" data={history.wpm} />
-      <StatRow label="ACCURACY" value={`${Math.round(accuracy)}%`} color="emerald" data={history.accuracy} />
-      <StatRow label="MISTAKES" value={mistakes} color="rose" data={history.mistakes} />
+      <StatCard
+        label="ACCURACY"
+        value={`${Math.round(accuracy)}%`}
+        data={history.accuracy}
+        color="sky"
+      />
 
-      <div className="pt-2">
-        <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">CHARACTERS</div>
-        <div className="text-xl font-bold text-slate-200 tracking-tight">{typedCharacters.length}/{parsedText.length}</div>
+      <StatCard
+        label="MISTAKES"
+        value={mistakes}
+        data={history.mistakes}
+        color="rose"
+      />
+
+      {/* PROGRESS */}
+
+      <div className="flex-1 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-5 flex flex-col justify-center">
+
+        <p className="text-[10px] uppercase tracking-[0.22em] font-bold text-slate-500">
+          PROGRESS
+        </p>
+
+        <div className="flex items-end justify-between mt-3">
+          <span className="text-3xl font-black text-white tabular-nums">
+            {typedCharacters.length}
+          </span>
+
+          <span className="text-sm text-slate-500">
+            / {parsedText.length}
+          </span>
+        </div>
+
+        <div className="mt-4 h-2 rounded-full bg-slate-900 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300"
+            style={{
+              width: `${progressPercent}%`,
+            }}
+          />
+        </div>
+
+        <div className="mt-3 text-sm text-slate-400 font-medium">
+          {progressPercent.toFixed(1)}%
+        </div>
       </div>
     </section>
   );
