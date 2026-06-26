@@ -11,6 +11,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@opentelemetry/api-logs": "^0.57.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.57.0",
+    "@opentelemetry/resources": "^1.30.0",
+    "@opentelemetry/sdk-logs": "^0.57.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "axios": "^1.13.6",
@@ -19,6 +23,7 @@
     "livekit-client": "^2.18.0",
     "next": "16.2.1",
     "phaser": "^3.90.0",
+    "posthog-js": "^1.393.5",
     "react": "19.2.4",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.4",

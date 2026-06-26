@@ -1,6 +1,17 @@
+'use client'
+
 import Link from "next/link";
+import posthog from 'posthog-js'
+import { useRouter } from 'next/navigation';
 
 export default function HeroSection() {
+  const router = useRouter();
+
+  const handleTypingTestClick = () => {
+    posthog.capture('typing_test_clicked');
+    router.push('/typing-test');
+  }
+
   return (
     <section className="space-y-6 sm:space-y-2">
       <div className="space-y-4">
@@ -14,12 +25,12 @@ export default function HeroSection() {
       </div>
 
       <div className="flex justify-center flex-wrap gap-4 pt-2">
-        <Link
-          href="/typing-test"
+        <button
+          onClick={handleTypingTestClick}
           className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-cyan-400 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
         >
           Start Typing Test
-        </Link>
+        </button>
         <Link
           href="/multiplayer"
           className="inline-flex items-center justify-center rounded-2xl border border-sky-200/20 bg-slate-900/45 px-6 py-3 font-semibold text-slate-200 backdrop-blur-sm transition hover:bg-slate-800/60 hover:text-white"
