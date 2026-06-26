@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/share/components/app-shell";
 import { AuthProvider } from "@/share/contexts/authContext";
 import { PHProvider } from "./providers";
+import GoogleAnalytics from "@/share/components/GoogleAnalytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -125,6 +126,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <GoogleAnalytics />
         <PHProvider>
           <AuthProvider>
             <AppShell>{children}</AppShell>
