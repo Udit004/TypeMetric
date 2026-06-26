@@ -4,6 +4,7 @@ import { AppShell } from "@/share/components/app-shell";
 import { AuthProvider } from "@/share/contexts/authContext";
 import { PHProvider } from "./providers";
 import GoogleAnalytics from "@/share/components/GoogleAnalytics";
+import MicrosoftClarity from "@/share/components/MicrosoftClarity";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -127,6 +128,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <GoogleAnalytics />
+        <MicrosoftClarity />
         <PHProvider>
           <AuthProvider>
             <AppShell>{children}</AppShell>
