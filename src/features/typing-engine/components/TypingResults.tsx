@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -46,6 +46,7 @@ interface TypingResultsProps {
   text: string;
   typedCharacters: string[];
   previousSession?: { wpm: number; accuracy: number } | null;
+  shareId?: string | null;
   onRestart: () => void;
 }
 
@@ -64,6 +65,7 @@ export function TypingResults({
   text,
   typedCharacters,
   previousSession,
+  shareId,
   onRestart,
 }: TypingResultsProps) {
   const formatTime = (ms: number) => {
@@ -71,6 +73,25 @@ export function TypingResults({
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m.toString()}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    if (shareId) {
+      const url = `${window.location.origin}/share/${shareId}`;
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleShareTwitter = () => {
+    if (shareId) {
+      const url = `${window.location.origin}/share/${shareId}`;
+      const text = `I just typed ${Math.round(wpm)} WPM with ${Math.round(accuracy)}% accuracy on TypeMetric! Can you beat my score? 🚀`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    }
   };
 
   const bestWpm = useMemo(() => Math.max(...history.wpm, 0), [history.wpm]);
@@ -234,8 +255,36 @@ export function TypingResults({
           </h2>
           <p className="text-slate-400 mt-1">Great job! Here are your results.</p>
         </div>
-        <div className="flex gap-4 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none px-5 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition font-medium flex items-center justify-center gap-2">
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto justify-end">
+          {shareId && (
+            <>
+              <button 
+                onClick={handleShareTwitter}
+                title="Share on Twitter"
+                className="px-4 py-2.5 rounded-lg border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 transition font-medium flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                Share
+              </button>
+              <button 
+                onClick={handleCopyLink}
+                className="px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition font-medium flex items-center justify-center gap-2"
+              >
+                {copied ? (
+                  <>
+                    <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-emerald-400">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    Copy Link
+                  </>
+                )}
+              </button>
+            </>
+          )}
+          <button className="px-5 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition font-medium flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Review Mistakes
           </button>

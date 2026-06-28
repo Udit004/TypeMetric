@@ -37,6 +37,7 @@ export function TypingInput({
   );
   const resolvedText = hasCustomText ? text : activeText;
   const [hasSavedCurrentSession, setHasSavedCurrentSession] = useState(false);
+  const [shareId, setShareId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState("Easy");
 
   const { elapsedMs, isFinished, startTimer, resetTimer } = useTimer({
@@ -241,7 +242,10 @@ export function TypingInput({
         };
 
         try {
-          await saveTypingSessionApi(payload, token);
+          const res = await saveTypingSessionApi(payload, token);
+          if (res.shareId) {
+            setShareId(res.shareId);
+          }
         } catch (error) {
           console.error("Failed to save typing session:", error);
         }
@@ -272,6 +276,7 @@ export function TypingInput({
     }
 
     setHasSavedCurrentSession(false);
+    setShareId(null);
     setHistory({ wpm: [0], rawWpm: [0], accuracy: [100], mistakes: [0] });
     lastUpdateRef.current = 0;
     resetTyping();
@@ -315,6 +320,7 @@ export function TypingInput({
             text={resolvedText}
             typedCharacters={typedCharacters}
             previousSession={previousSession}
+            shareId={shareId}
             onRestart={handleReset}
           />
         </div>

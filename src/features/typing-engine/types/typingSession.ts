@@ -22,4 +22,5 @@ export interface SavedTypingSession {
   mistakes: number;
   elapsedMs: number;
   createdAt: string;
+  shareId?: string;
 }
