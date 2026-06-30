@@ -157,7 +157,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             senderName: payload.senderName as string,
             message: `${payload.senderName} wants to play!`,
             metadata: {},
-            createdAt: new Date(payload.sentAt).toISOString(),
+            createdAt: new Date(payload.sentAt!).toISOString(),
             isRead: false,
           },
           ...current,

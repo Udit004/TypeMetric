@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://type-metric.vercel.app</loc><lastmod>2026-06-24T18:15:46.742Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://type-metric.vercel.app/about</loc><lastmod>2026-06-24T18:15:46.743Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://type-metric.vercel.app/auth/google/callback</loc><lastmod>2026-06-24T18:15:46.743Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://type-metric.vercel.app/ludo</loc><lastmod>2026-06-24T18:15:46.743Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://type-metric.vercel.app/multiplayer</loc><lastmod>2026-06-24T18:15:46.743Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://type-metric.vercel.app/profile</loc><lastmod>2026-06-24T18:15:46.743Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://type-metric.vercel.app/typing-test</loc><lastmod>2026-06-24T18:15:46.743Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app</loc><lastmod>2026-06-30T13:48:18.846Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app/about</loc><lastmod>2026-06-30T13:48:18.847Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app/auth/google/callback</loc><lastmod>2026-06-30T13:48:18.847Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app/ludo</loc><lastmod>2026-06-30T13:48:18.847Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app/multiplayer</loc><lastmod>2026-06-30T13:48:18.847Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app/profile</loc><lastmod>2026-06-30T13:48:18.847Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://type-metric.vercel.app/typing-test</loc><lastmod>2026-06-30T13:48:18.847Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>
