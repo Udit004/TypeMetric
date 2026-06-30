@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/share/hooks/useAuth";
 import { buildWsUrl } from "@/share/lib/ws";
 import { api } from "@/share/servies/api";
+import { usePushNotifications } from "@/share/hooks/usePushNotifications";
 
 type NotificationType = "FRIEND_ONLINE" | "RECORD_BEATEN" | "BADGE_EARNED" | "SYSTEM" | "FRIEND_REQUEST" | "play-request" | "room-invite";
 

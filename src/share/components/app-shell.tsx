@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "@/share/components/navbar";
 import { NotificationProvider } from "@/share/contexts/notificationContext";
 
+import { PushNotificationBanner } from "@/share/components/PushNotificationBanner";
+
 interface AppShellProps {
   children: ReactNode;
 }
@@ -31,6 +33,8 @@ export function AppShell({ children }: AppShellProps) {
         >
           {children}
         </main>
+        
+        <PushNotificationBanner />
       </div>
     </NotificationProvider>
   );
