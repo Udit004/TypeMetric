@@ -10,31 +10,55 @@ interface NotificationCenterProps {
   onClose: () => void;
 }
 
-function formatNotificationTime(sentAt: number): string {
+function formatNotificationTime(dateValue: number | string): string {
+  const date = new Date(dateValue);
+  if (isNaN(date.getTime())) {
+    return "Unknown time";
+  }
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(sentAt));
+  }).format(date);
 }
 
-function getNotificationCopy(notificationType: "play-request" | "room-invite"): {
+function getNotificationCopy(notificationType: string): {
   body: string;
   href: string;
   actionLabel: string;
 } {
-  if (notificationType === "room-invite") {
-    return {
-      body: "invited you directly into a race room.",
-      href: "/multiplayer",
-      actionLabel: "Join room",
-    };
+  switch (notificationType) {
+    case "room-invite":
+      return {
+        body: "invited you directly into a race room.",
+        href: "/multiplayer",
+        actionLabel: "Join room",
+      };
+    case "play-request":
+    case "FRIEND_REQUEST":
+      return {
+        body: "sent you a play request.",
+        href: "/multiplayer",
+        actionLabel: "Go to multiplayer",
+      };
+    case "RECORD_BEATEN":
+      return {
+        body: "just beat your record!",
+        href: "/leaderboard",
+        actionLabel: "View Leaderboard",
+      };
+    case "BADGE_EARNED":
+      return {
+        body: "earned a new achievement!",
+        href: "/profile",
+        actionLabel: "View Profile",
+      };
+    default:
+      return {
+        body: "sent you a notification.",
+        href: "/",
+        actionLabel: "View",
+      };
   }
-
-  return {
-    body: "sent you a play request.",
-    href: "/multiplayer",
-    actionLabel: "Go to multiplayer",
-  };
 }
 
 export function NotificationCenter({
@@ -118,13 +142,13 @@ export function NotificationCenter({
             {notifications.map((notification) => {
               const copy = getNotificationCopy(notification.type);
               const href =
-                notification.type === "room-invite" && notification.roomId
-                  ? `/multiplayer/room/${notification.roomId}`
+                notification.type === "room-invite" && notification.metadata?.roomId
+                  ? `/multiplayer/room/${notification.metadata.roomId}`
                   : copy.href;
 
               return (
                 <div
-                  key={notification.id}
+                  key={notification._id}
                   className={`px-4 py-4 transition ${
                     notification.isRead ? "bg-transparent" : "bg-cyan-400/6"
                   }`}
@@ -132,11 +156,11 @@ export function NotificationCenter({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-white">
-                        <span className="font-semibold">{notification.senderName}</span>{" "}
-                        {copy.body}
+                        <span className="font-semibold">{notification.senderName || "Someone"}</span>{" "}
+                        {notification.message || copy.body}
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
-                        {formatNotificationTime(notification.sentAt)}
+                        {formatNotificationTime(notification.createdAt)}
                       </p>
                     </div>
                     {!notification.isRead ? (
@@ -148,7 +172,7 @@ export function NotificationCenter({
                     <Link
                       href={href}
                       onClick={() => {
-                        markNotificationAsRead(notification.id);
+                        markNotificationAsRead(notification._id);
                         onClose();
                       }}
                       className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300"
@@ -157,7 +181,7 @@ export function NotificationCenter({
                     </Link>
                     <button
                       type="button"
-                      onClick={() => dismissNotification(notification.id)}
+                      onClick={() => dismissNotification(notification._id)}
                       className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/5"
                     >
                       Dismiss

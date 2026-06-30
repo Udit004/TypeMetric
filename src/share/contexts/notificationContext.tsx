@@ -13,17 +13,19 @@ import {
 
 import { useAuth } from "@/share/hooks/useAuth";
 import { buildWsUrl } from "@/share/lib/ws";
+import { api } from "@/share/servies/api";
 
-type NotificationType = "play-request" | "room-invite";
+type NotificationType = "FRIEND_ONLINE" | "RECORD_BEATEN" | "BADGE_EARNED" | "SYSTEM" | "FRIEND_REQUEST" | "play-request" | "room-invite";
 
 export interface AppNotification {
-  id: string;
+  _id: string;
   type: NotificationType;
-  senderUserId: string;
-  senderName: string;
-  roomId: string | null;
-  sentAt: number;
+  senderId?: string;
+  senderName?: string;
+  message: string;
+  metadata: Record<string, any>;
   isRead: boolean;
+  createdAt: string;
 }
 
 interface NotificationContextValue {
@@ -33,8 +35,8 @@ interface NotificationContextValue {
   sendPlayRequest: (targetUserId: string) => boolean;
   sendRoomInvite: (targetUserId: string, roomId: string) => boolean;
   dismissNotification: (id: string) => void;
-  markAllAsRead: () => void;
-  markNotificationAsRead: (id: string) => void;
+  markAllAsRead: () => Promise<void>;
+  markNotificationAsRead: (id: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(
@@ -63,6 +65,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     () => (token ? notifications : []),
     [notifications, token]
   );
+
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const { data } = await api.get<{ notifications: AppNotification[] }>(
+        "/notifications"
+      );
+      setNotifications(data.notifications);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   useEffect(() => {
     if (!wsUrl) {
@@ -110,6 +128,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (message.type === "notification:new") {
+        const payload = message.payload as AppNotification | undefined;
+        if (!payload?._id) return;
+
+        setNotifications((current) => [payload as AppNotification, ...current]);
+        return;
+      }
+
       if (message.type === "notification:friend-play-request") {
         const payload = message.payload as
           | { senderUserId?: string; senderName?: string; sentAt?: number }
@@ -125,12 +151,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
         setNotifications((current) => [
           {
-            id: `${payload.senderUserId}:${payload.sentAt}`,
+            _id: `${payload.senderUserId}:${payload.sentAt}`,
             type: "play-request",
-            senderUserId: payload.senderUserId as string,
+            senderId: payload.senderUserId as string,
             senderName: payload.senderName as string,
-            roomId: null,
-            sentAt: payload.sentAt as number,
+            message: `${payload.senderName} wants to play!`,
+            metadata: {},
+            createdAt: new Date(payload.sentAt).toISOString(),
             isRead: false,
           },
           ...current,
@@ -164,12 +191,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
         setNotifications((current) => [
           {
-            id: `${senderUserId}:${roomId}:${sentAt}`,
+            _id: `${senderUserId}:${roomId}:${sentAt}`,
             type: "room-invite",
-            senderUserId,
+            senderId: senderUserId,
             senderName,
-            roomId,
-            sentAt,
+            message: `${senderName} invited you to a room!`,
+            metadata: { roomId },
+            createdAt: new Date(sentAt).toISOString(),
             isRead: false,
           },
           ...current,
@@ -181,7 +209,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       socket.close();
       socketRef.current = null;
     };
-  }, [wsUrl]);
+  }, [wsUrl, fetchNotifications]);
 
   const sendPlayRequest = useCallback((targetUserId: string) => {
     const socket = socketRef.current;
@@ -224,24 +252,34 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const dismissNotification = useCallback((id: string) => {
     setNotifications((current) =>
-      current.filter((notification) => notification.id !== id)
+      current.filter((notification) => notification._id !== id)
     );
   }, []);
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.isRead ? notification : { ...notification, isRead: true }
-      )
-    );
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await api.patch("/notifications/read-all");
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification.isRead ? notification : { ...notification, isRead: true }
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+    }
   }, []);
 
-  const markNotificationAsRead = useCallback((id: string) => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id ? { ...notification, isRead: true } : notification
-      )
-    );
+  const markNotificationAsRead = useCallback(async (id: string) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification._id === id ? { ...notification, isRead: true } : notification
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
   }, []);
 
   const unreadCount = useMemo(
