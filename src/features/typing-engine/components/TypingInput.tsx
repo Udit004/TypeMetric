@@ -15,9 +15,11 @@ import { saveTypingSessionApi } from "../services/typingSessionService";
 import type { CompletionReason, SaveTypingSessionPayload } from "../types/typingSession";
 import { TextRenderer } from "./TextRenderer";
 import { TypingStats } from "./TypingStats";
-import { RunnerGame } from "./RunnerGame";
+// import { RunnerGame } from "./RunnerGame";
 import { useAuth } from "@/share/hooks/useAuth";
 import { TypingResults } from "./TypingResults";
+import { VirtualKeyboard } from "./VirtualKeyboard";
+import { TypingBackground } from "./TypingBackground";
 
 interface TypingInputProps {
   text?: string;
@@ -288,13 +290,13 @@ export function TypingInput({
       <section
         ref={panelRef}
         aria-label="Typing engine results"
-        className={`relative flex min-h-136 flex-col overflow-hidden rounded-[1.4rem] bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:min-h-144 sm:p-6 ${
+        className={`relative flex min-h-136 flex-col overflow-hidden rounded-[1.4rem] p-4 sm:min-h-144 sm:p-6 ${
           isFullscreen
             ? "fixed inset-0 z-50 h-screen overflow-y-auto rounded-none p-4 sm:p-6 lg:p-8"
             : ""
         }`}
       >
-        <div className="pointer-events-none absolute inset-0 z-1 bg-slate-950/35" />
+        <TypingBackground />
         
         <button
           type="button"
@@ -332,53 +334,18 @@ export function TypingInput({
     <section
       ref={panelRef}
       aria-label="Typing engine"
-      className={`relative flex min-h-136 flex-col gap-6 overflow-hidden rounded-[1.4rem] bg-[linear-gradient(140deg,rgba(15,23,42,0.82),rgba(10,15,27,0.78))] p-4 sm:min-h-144 sm:p-6 ${
+      className={`relative flex min-h-136 flex-col gap-4 overflow-hidden rounded-[1.4rem] p-4 sm:min-h-144 sm:p-6 ${
         isFullscreen
           ? "fixed inset-0 z-50 h-screen items-center justify-center overflow-hidden rounded-none p-4 sm:p-6 lg:p-8"
           : ""
       }`}
     >
-      <RunnerGame
-        wpm={currentWpm}
-        isActive={!isSessionCompleted}
-        hasStartedTyping={typedCharacters.length > 0}
-        isFullscreen={isFullscreen}
-        asBackground
-      />
+      {/* Smooth Dark Animated Background */}
+      <TypingBackground />
 
       <div className="pointer-events-none absolute inset-0 z-1 bg-slate-950/35" />
 
-      {/* Top Bar with Difficulty Dropdown and Visual Progress */}
-      <div className={`relative z-10 flex items-center justify-between px-2 pt-2 ${isFullscreen ? "mx-auto w-full max-w-6xl" : ""}`}>
-        <div className="relative">
-          <select 
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            disabled={isSessionActive}
-            aria-label="Select difficulty"
-            className="appearance-none bg-transparent text-slate-200 font-semibold text-sm outline-none pr-6 cursor-pointer disabled:opacity-50"
-          >
-            <option value="Easy" className="bg-slate-900">Easy</option>
-            <option value="Medium" className="bg-slate-900">Medium</option>
-            <option value="Hard" className="bg-slate-900">Hard</option>
-          </select>
-          <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-        </div>
-        
-        <div className="flex gap-1.5 ml-4 sm:ml-0">
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
-          <div className="h-1.5 w-4 sm:w-8 rounded-full bg-slate-700/50" />
-        </div>
-        
-        <div className="text-xs sm:text-sm font-semibold text-slate-400 tracking-wider">
-          1 / 10
-        </div>
-      </div>
+      {/* Empty space for Top Bar since we moved it to TypingStats below, but we can just let it flow. */}
 
       <button
         type="button"
@@ -388,36 +355,34 @@ export function TypingInput({
         {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
       </button>
 
-      <div className={`relative z-10 flex flex-row gap-8 w-full ${isFullscreen ? "pt-10" : "mt-6"}`}>
-        
-          
-  
+      <div className={`relative z-10 flex flex-col gap-4 w-full flex-1 ${isFullscreen ? "pt-10 max-w-6xl mx-auto" : "mt-2"}`}>
+        <TypingStats
+          text={resolvedText}
+          typedCharacters={typedCharacters}
+          mistakes={mistakes}
+          elapsedMs={elapsedMs}
+          durationSeconds={durationSeconds}
+          difficulty={difficulty}
+          onDifficultyChange={setDifficulty}
+          isSessionActive={isSessionActive}
+        />
+        <main className="flex-1 flex flex-col min-w-0 gap-4 mt-2">
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <TextRenderer
+              text={resolvedText}
+              typedCharacters={typedCharacters}
+              currentIndex={currentIndex}
+              isFinished={isFinished}
+              onRestart={handleReset}
+            />
+          </div>
 
-        <main className="flex-1 flex flex-col min-w-0">
-          <TextRenderer
-            text={resolvedText}
-            typedCharacters={typedCharacters}
-            currentIndex={currentIndex}
-            isFinished={isFinished}
-            onRestart={handleReset}
-          />
-
-          <p className="mt-8 mb-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 text-center">
+          <p className="mt-1 mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300 text-center opacity-80">
             Press any key to start typing
           </p>
-          <TypingStats
-            text={resolvedText}
-            typedCharacters={typedCharacters}
-            mistakes={mistakes}
-            elapsedMs={elapsedMs}
-            durationSeconds={durationSeconds}
-            history={{
-              wpm: history.wpm.slice(-40),
-              rawWpm: history.rawWpm.slice(-40),
-              accuracy: history.accuracy.slice(-40),
-              mistakes: history.mistakes.slice(-40),
-            }}
-          />
+          <div className="shrink-0 flex justify-center">
+            <VirtualKeyboard />
+          </div>
         </main>
       </div>
     </section>

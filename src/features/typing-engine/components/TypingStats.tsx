@@ -2,25 +2,6 @@ import { useMemo } from "react";
 import { calculateAccuracy, calculateWPM } from "../lib/metrics";
 import { parseTextToCharacters } from "../lib/textParser";
 import { isCharacterCorrect } from "../lib/validation";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler,
-} from "chart.js";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler
-);
 
 interface TypingStatsProps {
   text: string;
@@ -28,105 +9,10 @@ interface TypingStatsProps {
   mistakes: number;
   elapsedMs: number;
   durationSeconds?: number;
-  history: {
-    wpm: number[];
-    rawWpm: number[];
-    accuracy: number[];
-    mistakes: number[];
-  };
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-  data,
-}: {
-  label: string;
-  value: string | number;
-  color: "emerald" | "sky" | "rose";
-  data: number[];
-}) {
-  const colorMap = {
-    emerald: {
-      stroke: "#34d399",
-      bg: "rgba(52,211,153,0.12)",
-      grad: "from-emerald-500/10",
-    },
-    sky: {
-      stroke: "#38bdf8",
-      bg: "rgba(56,189,248,0.12)",
-      grad: "from-sky-500/10",
-    },
-    rose: {
-      stroke: "#fb7185",
-      bg: "rgba(251,113,133,0.12)",
-      grad: "from-rose-500/10",
-    },
-  };
-
-  const theme = colorMap[color];
-
-  const chartData = {
-    labels: data.map((_, i) => i),
-    datasets: [
-      {
-        data,
-        fill: true,
-        borderColor: theme.stroke,
-        backgroundColor: theme.bg,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        tension: 0.35,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false as const,
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false },
-    },
-    interaction: {
-      mode: "index" as const,
-      intersect: false,
-    },
-    scales: {
-      x: { display: false },
-      y: {
-        display: false,
-        beginAtZero: true,
-      },
-    },
-  };
-
-  return (
-    <div className="relative flex-1 min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-5 group hover:bg-slate-800/60 transition-all duration-300">
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${theme.grad} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}
-      />
-
-      <div className="relative flex h-full items-center justify-between">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.22em] font-bold text-slate-500">
-            {label}
-          </p>
-
-          <h2 className="mt-1 text-3xl lg:text-4xl font-black tracking-tight text-white tabular-nums">
-            {value}
-          </h2>
-        </div>
-
-        <div className="w-20 lg:w-24 h-12 flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-          <Line data={chartData} options={options} />
-        </div>
-      </div>
-    </div>
-  );
+  history?: any; // unused in compact layout
+  difficulty?: string;
+  onDifficultyChange?: (val: string) => void;
+  isSessionActive?: boolean;
 }
 
 export function TypingStats({
@@ -135,17 +21,16 @@ export function TypingStats({
   mistakes,
   elapsedMs,
   durationSeconds = 60,
-  history,
+  difficulty,
+  onDifficultyChange,
+  isSessionActive,
 }: TypingStatsProps) {
   const parsedText = useMemo(() => parseTextToCharacters(text), [text]);
 
   const correctCharacters = useMemo(
     () =>
       typedCharacters.reduce((count, typedChar, index) => {
-        return isCharacterCorrect(
-          typedChar,
-          parsedText[index] ?? ""
-        )
+        return isCharacterCorrect(typedChar, parsedText[index] ?? "")
           ? count + 1
           : count;
       }, 0),
@@ -158,26 +43,15 @@ export function TypingStats({
   );
 
   const accuracy = useMemo(
-    () =>
-      calculateAccuracy(
-        correctCharacters,
-        typedCharacters.length
-      ),
+    () => calculateAccuracy(correctCharacters, typedCharacters.length),
     [correctCharacters, typedCharacters.length]
   );
 
-  const timeLeft = Math.max(
-    0,
-    durationSeconds - Math.floor(elapsedMs / 1000)
-  );
-
+  const timeLeft = Math.max(0, durationSeconds - Math.floor(elapsedMs / 1000));
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-
-    return `${m.toString().padStart(2, "0")}:${s
-      .toString()
-      .padStart(2, "0")}`;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   const progressPercent = Math.min(
@@ -186,93 +60,74 @@ export function TypingStats({
   );
 
   return (
-    <section
-      aria-label="Typing statistics"
-      className="flex flex-col lg:flex-row gap-4 w-full items-stretch"
-    >
-      {/* TIME */}
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full bg-slate-900/60 border border-white/10 rounded-2xl p-3 backdrop-blur-md shadow-xl transition-all relative overflow-hidden">
+      {/* Subtle animated gradient background for the stats bar */}
+      <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-indigo-500/5 to-purple-500/5 bg-[length:200%_200%] animate-[pulse_6s_ease-in-out_infinite] pointer-events-none" />
 
-      <div className="relative lg:flex-[1.3] flex-1 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-6 shadow-xl">
+      {/* LEFT SECTION: Difficulty & Level */}
+      <div className="relative flex items-center gap-4 pl-2 z-10 w-full sm:w-auto justify-between sm:justify-start">
+        {difficulty && onDifficultyChange && (
+          <div className="relative">
+            <select
+              value={difficulty}
+              onChange={(e) => onDifficultyChange(e.target.value)}
+              disabled={isSessionActive}
+              aria-label="Select difficulty"
+              className="appearance-none bg-transparent text-slate-200 font-semibold text-sm outline-none pr-6 cursor-pointer disabled:opacity-50"
+            >
+              <option value="Easy" className="bg-slate-900">Easy</option>
+              <option value="Medium" className="bg-slate-900">Medium</option>
+              <option value="Hard" className="bg-slate-900">Hard</option>
+            </select>
+            <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        )}
 
-        <div className="absolute top-0 right-0 p-8 opacity-20">
-          <svg
-            className="w-24 h-24 text-teal-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeWidth={1}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-
-        <div className="relative flex flex-col justify-center h-full">
-          <p className="text-[11px] uppercase tracking-[0.22em] font-bold text-teal-400">
-            TIME LEFT
-          </p>
-
-          <h1 className="mt-2 text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-black tracking-tight text-white tabular-nums">
-            {formatTime(timeLeft)}
-          </h1>
+        <div className="flex gap-1.5 items-center">
+          <div className="h-1.5 w-4 sm:w-6 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
+          <div className="h-1.5 w-4 sm:w-6 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />
+          <div className="h-1.5 w-4 sm:w-6 rounded-full bg-slate-700/50" />
+          <div className="h-1.5 w-4 sm:w-6 rounded-full bg-slate-700/50" />
+          <div className="h-1.5 w-4 sm:w-6 rounded-full bg-slate-700/50" />
+          <span className="ml-1 sm:ml-2 text-[10px] font-bold text-slate-400 tracking-wider">1/10</span>
         </div>
       </div>
 
-      <StatCard
-        label="WPM"
-        value={Math.round(wpm)}
-        data={history.wpm}
-        color="emerald"
-      />
+      {/* RIGHT SECTION: Stats */}
+      <div className="relative flex items-center justify-between sm:justify-end gap-3 sm:gap-6 pr-2 z-10 w-full sm:w-auto">
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-teal-400 mb-0.5">Time</span>
+          <span className="text-base sm:text-lg font-black text-white tabular-nums leading-none">{formatTime(timeLeft)}</span>
+        </div>
+        
+        <div className="w-px h-6 bg-white/10" />
 
-      <StatCard
-        label="ACCURACY"
-        value={`${Math.round(accuracy)}%`}
-        data={history.accuracy}
-        color="sky"
-      />
-
-      <StatCard
-        label="MISTAKES"
-        value={mistakes}
-        data={history.mistakes}
-        color="rose"
-      />
-
-      {/* PROGRESS */}
-
-      <div className="flex-1 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-5 flex flex-col justify-center">
-
-        <p className="text-[10px] uppercase tracking-[0.22em] font-bold text-slate-500">
-          PROGRESS
-        </p>
-
-        <div className="flex items-end justify-between mt-3">
-          <span className="text-3xl font-black text-white tabular-nums">
-            {typedCharacters.length}
-          </span>
-
-          <span className="text-sm text-slate-500">
-            / {parsedText.length}
-          </span>
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-emerald-400 mb-0.5">WPM</span>
+          <span className="text-base sm:text-lg font-black text-white tabular-nums leading-none">{Math.round(wpm)}</span>
         </div>
 
-        <div className="mt-4 h-2 rounded-full bg-slate-900 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-300"
-            style={{
-              width: `${progressPercent}%`,
-            }}
-          />
+        <div className="w-px h-6 bg-white/10" />
+
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-sky-400 mb-0.5">Acc</span>
+          <span className="text-base sm:text-lg font-black text-white tabular-nums leading-none">{Math.round(accuracy)}%</span>
         </div>
 
-        <div className="mt-3 text-sm text-slate-400 font-medium">
-          {progressPercent.toFixed(1)}%
+        <div className="w-px h-6 bg-white/10" />
+
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-rose-400 mb-0.5">Err</span>
+          <span className="text-base sm:text-lg font-black text-white tabular-nums leading-none">{mistakes}</span>
+        </div>
+        
+        <div className="w-px h-6 bg-white/10 hidden sm:block" />
+        
+        <div className="flex flex-col items-center hidden sm:flex">
+          <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-0.5">Prog</span>
+          <span className="text-base sm:text-lg font-black text-white tabular-nums leading-none">{Math.round(progressPercent)}%</span>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
